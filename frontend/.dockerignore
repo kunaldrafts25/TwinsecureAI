@@ -1,0 +1,33 @@
+# project/.dockerignore
+
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# IDE/Editor folders
+.vscode
+.idea
+
+# Environment variables file
+.env*
+!.env.example
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db

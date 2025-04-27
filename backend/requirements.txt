@@ -1,0 +1,49 @@
+# Core Framework
+ # Includes pydantic, uvicorn, etc.
+uvicorn[standard]>=0.27.0,<0.28.0
+fastapi[all]>=0.110.0,<0.111.0
+python-multipart
+
+# Database
+sqlalchemy[asyncio]>=2.0.0,<2.1.0
+asyncpg>=0.29.0,<0.30.0 # PostgreSQL async driver
+alembic>=1.13.0,<1.14.0 # Database migrations
+psycopg2-binary>=2.9.0,<2.10.0 # Needed by Alembic sometimes, even with asyncpg
+
+# Security & Auth
+python-jose[cryptography]>=3.3.0,<3.4.0 # JWT handling
+passlib[bcrypt]>=1.7.4,<1.8.0 # Password hashing
+
+# Configuration
+python-dotenv>=1.0.0,<1.1.0
+
+# HTTP Client (for external APIs)
+httpx>=0.27.0,<0.28.0
+
+# Alerting
+slack_sdk>=3.20.0,<3.21.0 # If using Slack SDK (alternative to simple webhook)
+
+# PDF Generation (Choose one or both)
+# WeasyPrint>=60.0,<61.0 # Needs system dependencies (Pango, Cairo, GDK-PixBuf)
+# pdfkit>=1.0.0,<1.1.0 # Needs wkhtmltopdf installed
+reportlab>=4.0.0,<4.1.0 # Another option for PDF generation
+
+# GeoIP
+geoip2>=4.7.0,<4.8.0
+
+# ML (Optional - Install if using the ML module)
+# tensorflow>=2.15.0,<2.16.0 # Or tensorflow-cpu
+# pandas>=2.0.0,<2.1.0 # Often used with ML data
+# scikit-learn>=1.3.0,<1.4.0 # For preprocessing, etc.
+
+# Rate Limiting (Optional)
+# slowapi>=0.1.9,<0.2.0
+
+# Optional: For better logging formatting
+# loguru>=0.7.0,<0.8.0
+
+# Development/Testing
+pytest>=8.0.0,<8.1.0
+pytest-asyncio>=0.23.0,<0.24.0
+requests>=2.31.0,<2.32.0 # For testing API endpoints
+
