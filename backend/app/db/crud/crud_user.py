@@ -4,8 +4,8 @@ from typing import Optional, List, Union
 from uuid import UUID
 
 from app.db.models import User
-from app.schemas import UserCreate, UserUpdate
-from app.core.security import get_password_hash, verify_password
+from app.schemas.user_schema import UserCreate, UserUpdate
+from app.core.password import get_password_hash, verify_password
 
 class CRUDUser:
     """CRUD operations for User model."""
@@ -40,7 +40,7 @@ class CRUDUser:
             full_name=obj_in.full_name,
             is_active=obj_in.is_active,
             is_superuser=obj_in.is_superuser,
-            # role=obj_in.role # Add role if used
+            role=obj_in.role
         )
         db.add(db_obj)
         await db.commit() # Commit to get the ID generated

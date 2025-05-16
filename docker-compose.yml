@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: twinsecure_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=kUNAL@#$12345
+      - POSTGRES_DB=TwinSecure
+    ports:
+      - "5432:5432"
+    networks:
+      - twinsecure_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: twinsecure_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - twinsecure_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: twinsecure_backend
+    volumes:
+      - ./backend/app:/home/appuser/app/app
+      - ./backend/alembic:/home/appuser/app/alembic
+      - ./backend/alembic.ini:/home/appuser/app/alembic.ini
+      - ./backend/scripts:/home/appuser/app/scripts
+      - ./GeoLite2-City.mmdb:/home/appuser/app/app/GeoLite2-City.mmdb
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=kUNAL@#$12345
+      - POSTGRES_DB=TwinSecure
+      - POSTGRES_PORT=5432
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:80","http://localhost:5173","http://localhost","http://frontend:5173"]
+      - SECURITY__SECRET_KEY=2eac339caec02b4fe4a2120068a43f85b316abdfdcb20a68405c080069c5ab87
+      - SECURITY__ALGORITHM=HS256
+      - SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - SECURITY__REFRESH_TOKEN_EXPIRE_DAYS=7
+      - FIRST_SUPERUSER=admin@finguard.com
+      - FIRST_SUPERUSER_PASSWORD=123456789
+      - MAXMIND_DB_PATH=/home/appuser/app/app/GeoLite2-City.mmdb
+      - ABUSEIPDB_API_KEY=your_abuseipdb_key
+      - SLACK_WEBHOOK_URL=your_slack_webhook
+      - DISCORD_WEBHOOK_URL=your_discord_webhook
+      - SMTP_HOST=smtp.example.com
+      - SMTP_PORT=587
+      - SMTP_USER=your_smtp_user
+      - SMTP_PASSWORD=your_smtp_password
+      - EMAILS_FROM_EMAIL=alerts@example.com
+      - EMAILS_FROM_NAME=TwinSecure AI
+      - ALERT_RECIPIENTS=["alerts@example.com"]
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - twinsecure_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: >
+      bash -c "
+        python -m scripts.check_postgres &&
+        python -m scripts.create_admin_user &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.new
+    container_name: twinsecure_frontend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - twinsecure_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus
+    container_name: twinsecure_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - twinsecure_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: twinsecure_grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - twinsecure_network
+
+  logging:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
+    container_name: twinsecure_logs
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - logs_data:/usr/share/elasticsearch/data
+    networks:
+      - twinsecure_network
+
+networks:
+  twinsecure_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  grafana_data:
+  logs_data:

@@ -1,130 +1,281 @@
 from app.core.config import settings, logger
 from app.schemas import Alert # Use the Alert schema for type hinting
-from .slack import send_slack_message
-from .email import send_email_alert
-from .discord import send_discord_message
 import asyncio # For running multiple alerts concurrently
 from app.db.models import Report # Import Report model if needed for type hinting report_data
+from ..rate_limiter import RateLimiter
+from ..validation import validate_alert_payload
+import backoff
+from datetime import datetime
+from typing import Dict, Any, Optional, List, Union
+
+# Import alerters
+from .email import EmailAlerter, send_email_alert
+from .slack import SlackAlerter, send_slack_message
+from .discord import DiscordAlerter, send_discord_message
 
 class AlertingClient:
     """
     Client to orchestrate sending alerts via multiple channels.
     """
 
-    async def send_alert(self, alert_data: Alert):
+    def __init__(self, email_config: Optional[Dict[str, Any]] = None,
+                 slack_config: Optional[Dict[str, Any]] = None,
+                 discord_config: Optional[Dict[str, Any]] = None):
         """
-        Sends an alert notification through all configured channels.
+        Initialize the alerting client with configurations for different alerters.
 
         Args:
-            alert_data: The Alert object containing details to send.
+            email_config: Configuration for email alerter
+            slack_config: Configuration for Slack alerter
+            discord_config: Configuration for Discord alerter
         """
-        logger.info(f"Sending alert notifications for Alert ID: {alert_data.id}, Type: {alert_data.alert_type}, IP: {alert_data.source_ip}")
+        self.rate_limiter = RateLimiter(max_requests=100, time_window=60)  # 100 requests per minute
 
-        # --- Format the message (customize as needed) ---
-        title = f"🚨 TwinSecure Alert: {alert_data.alert_type} 🚨"
-        details = (
-            f"*Timestamp:* {alert_data.triggered_at.isoformat() if alert_data.triggered_at else 'N/A'}\n"
-            f"*Source IP:* {alert_data.source_ip or 'N/A'}\n"
-            f"*Severity:* {alert_data.severity.upper() if alert_data.severity else 'N/A'}\n"
-            f"*Status:* {alert_data.status.upper() if alert_data.status else 'N/A'}\n"
-        )
-        if alert_data.ip_info:
-            details += f"*Location:* {alert_data.ip_info.get('city', 'N/A')}, {alert_data.ip_info.get('country', 'N/A')}\n"
-            # Add ASN if available in your GeoIP data structure
-            # details += f"*ASN:* {alert_data.ip_info.get('asn', 'N/A')}\n"
-        if alert_data.abuse_score is not None:
-            details += f"*Abuse Score:* {alert_data.abuse_score}/100\n"
-        if alert_data.payload:
-            # Avoid sending huge payloads directly, maybe summarize or link
-            try:
-                # Attempt to pretty-print if JSON, otherwise just take string slice
-                import json
-                payload_summary = json.dumps(alert_data.payload, indent=2)
-                if len(payload_summary) > 300:
-                     payload_summary = payload_summary[:300] + "\n... (truncated)"
-            except (TypeError, json.JSONDecodeError):
-                 payload_summary = str(alert_data.payload)[:300] + "..." # Limit payload preview
+        # Initialize alerters
+        self.email_alerter = None
+        self.slack_alerter = None
+        self.discord_alerter = None
 
-            details += f"*Payload Snippet:* ```\n{payload_summary}\n```\n"
-        if alert_data.notes:
-            details += f"*Notes:* {alert_data.notes}\n"
+        # Set up email alerter if enabled
+        if email_config and email_config.get("enabled", True):
+            self.email_alerter = EmailAlerter(
+                smtp_server=email_config.get("smtp_server", settings.SMTP_HOST),
+                smtp_port=email_config.get("smtp_port", settings.SMTP_PORT),
+                username=email_config.get("username", settings.SMTP_USER),
+                password=email_config.get("password", settings.SMTP_PASSWORD),
+                from_email=email_config.get("from_email", settings.EMAILS_FROM_EMAIL),
+                to_emails=email_config.get("to_emails", settings.ALERT_RECIPIENTS)
+            )
 
-        # Add link to dashboard (replace with actual frontend URL from settings?)
-        # dashboard_link = f"{settings.FRONTEND_URL}/alerts/{alert_data.id}"
-        # details += f"\n*Link:* <{dashboard_link}|View in Dashboard>"
+        # Set up Slack alerter if enabled
+        if slack_config and slack_config.get("enabled", True):
+            self.slack_alerter = SlackAlerter(
+                webhook_url=slack_config.get("webhook_url", settings.SLACK_WEBHOOK_URL),
+                channel=slack_config.get("channel", settings.SLACK_CHANNEL)
+            )
 
-        # --- Send concurrently ---
-        tasks = []
-        if settings.SLACK_WEBHOOK_URL:
-            # Pass alert_data if Slack function needs more context
-            tasks.append(send_slack_message(title=title, details=details, alert_data=alert_data))
-        if settings.SMTP_HOST and settings.ALERT_RECIPIENTS:
-             # Email might need different formatting (HTML?)
-            email_subject = title
-            # Basic text conversion, consider HTML for better formatting
-            email_body = details.replace("*", "").replace("`", "")
-            tasks.append(send_email_alert(subject=email_subject, content=email_body))
-        if settings.DISCORD_WEBHOOK_URL:
-             # Pass alert_data if Discord function needs more context
-            tasks.append(send_discord_message(title=title, details=details, alert_data=alert_data))
+        # Set up Discord alerter if enabled
+        if discord_config and discord_config.get("enabled", True):
+            self.discord_alerter = DiscordAlerter(
+                webhook_url=discord_config.get("webhook_url", settings.DISCORD_WEBHOOK_URL)
+            )
 
-        if not tasks:
-            logger.warning(f"No alerting channels configured for alert ID: {alert_data.id}")
-            return
+        # Legacy channels dict for backward compatibility
+        self.channels = {
+            'slack': send_slack_message,
+            'email': send_email_alert,
+            'discord': send_discord_message
+        }
 
-        logger.debug(f"Dispatching {len(tasks)} alert notifications for alert ID: {alert_data.id}")
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        self.retry_config = {
+            'max_tries': 3,
+            'max_time': 30,
+            'jitter': True
+        }
 
-        # Log results/errors
-        # Determine which task failed based on order and configuration
-        channel_map = []
-        if settings.SLACK_WEBHOOK_URL: channel_map.append("Slack")
-        if settings.SMTP_HOST and settings.ALERT_RECIPIENTS: channel_map.append("Email")
-        if settings.DISCORD_WEBHOOK_URL: channel_map.append("Discord")
+    @backoff.on_exception(
+        backoff.expo,
+        (ConnectionError, TimeoutError),
+        max_tries=3,
+        max_time=30
+    )
+    async def _send_with_retry(self, channel: str, **kwargs) -> bool:
+        try:
+            await self.channels[channel](**kwargs)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send alert to {channel}: {str(e)}")
+            raise
 
-        for i, result in enumerate(results):
-            channel = channel_map[i] if i < len(channel_map) else "Unknown Channel"
-            if isinstance(result, Exception):
-                logger.error(f"Failed to send alert ID {alert_data.id} via {channel}: {result}", exc_info=False) # Avoid logging full trace unless needed
-            else:
-                 logger.info(f"Alert ID {alert_data.id} sent successfully via {channel}.")
-
-
-    async def send_report_notification(self, report_data: dict):
+    async def send_alert(
+        self,
+        alert_data: Dict[str, Any],
+        channels: Optional[List[str]] = None
+    ) -> Dict[str, bool]:
         """
-        Sends a notification about a newly generated report (primarily email).
+        Send an alert through configured alerters.
 
         Args:
-            report_data: Dictionary containing report metadata (title, summary, download_url, generated_at, recommendations).
-                         Should ideally match the Report schema structure.
+            alert_data: Dictionary containing alert information
+            channels: Optional list of specific channels to use
+
+        Returns:
+            Dict mapping channel names to success status
         """
-        report_title = report_data.get('title', 'N/A')
-        logger.info(f"Sending notification for generated report: {report_title}")
+        results = {}
 
-        subject = f"📊 TwinSecure Report Generated: {report_title}"
-        generated_at_str = report_data.get('generated_at')
-        if isinstance(generated_at_str, datetime): # Format datetime if needed
-             generated_at_str = generated_at_str.strftime('%Y-%m-%d %H:%M:%S UTC')
-
-        body = (
-            f"A new security report has been generated:\n\n"
-            f"Title: {report_title}\n"
-            f"Summary: {report_data.get('summary', 'N/A')}\n"
-            f"Generated At: {generated_at_str or 'N/A'}\n\n"
-            # Assuming a download URL is constructed and passed in report_data
-            f"Download Link: {report_data.get('download_url', 'Link not available')}\n\n"
-            f"Recommendations:\n{report_data.get('recommendations', 'N/A')}\n"
-        )
-
-        if settings.SMTP_HOST and settings.ALERT_RECIPIENTS:
+        # Check if email alerter is configured and should be used
+        if self.email_alerter and (not channels or "email" in channels):
             try:
-                await send_email_alert(subject=subject, content=body)
-                logger.info(f"Report notification email sent successfully for: {report_title}")
+                success = await self.email_alerter.send_alert(alert_data)
+                results["email"] = success
             except Exception as e:
-                logger.error(f"Failed to send report notification email for {report_title}: {e}")
-        else:
-            logger.warning(f"Email (SMTP) is not configured. Cannot send report notification for: {report_title}")
+                logger.error(f"Failed to send email alert: {str(e)}")
+                results["email"] = False
 
+        # Check if Slack alerter is configured and should be used
+        if self.slack_alerter and (not channels or "slack" in channels):
+            try:
+                success = await self.slack_alerter.send_alert(alert_data)
+                results["slack"] = success
+            except Exception as e:
+                logger.error(f"Failed to send Slack alert: {str(e)}")
+                results["slack"] = False
+
+        # Check if Discord alerter is configured and should be used
+        if self.discord_alerter and (not channels or "discord" in channels):
+            try:
+                success = await self.discord_alerter.send_alert(alert_data)
+                results["discord"] = success
+            except Exception as e:
+                logger.error(f"Failed to send Discord alert: {str(e)}")
+                results["discord"] = False
+
+        return results
+
+    async def send_alert_legacy(
+        self,
+        alert_type: str,
+        severity: str,
+        message: str,
+        payload: Optional[Dict[str, Any]] = None,
+        channels: Optional[List[str]] = None,
+        retry: bool = True
+    ) -> Dict[str, bool]:
+        """
+        Legacy method to send an alert through multiple channels concurrently.
+
+        Args:
+            alert_type: Type of alert (e.g., 'security', 'performance')
+            severity: Alert severity ('critical', 'error', 'warning', 'info')
+            message: Alert message
+            payload: Optional additional data
+            channels: List of channels to send to (defaults to all configured)
+            retry: Whether to retry sending the alert if it fails
+
+        Returns:
+            Dict mapping channel names to success status
+        """
+        if not await self.rate_limiter.check_rate_limit('send_alert'):
+            logger.warning("Rate limit exceeded for send_alert")
+            return {channel: False for channel in self.channels.keys()}
+
+        if not validate_alert_payload({
+            'type': alert_type,
+            'severity': severity,
+            'message': message,
+            'payload': payload
+        }):
+            logger.error("Invalid alert payload")
+            return {channel: False for channel in self.channels.keys()}
+
+        channels = channels or list(self.channels.keys())
+        results = {}
+
+        async def send_to_channel(channel: str) -> bool:
+            try:
+                if retry:
+                    return await self._send_with_retry(
+                        channel,
+                        title=f"{severity.upper()} Alert: {alert_type}",
+                        message=message,
+                        severity=severity,
+                        payload=payload
+                    )
+                else:
+                    await self.channels[channel](
+                        title=f"{severity.upper()} Alert: {alert_type}",
+                        message=message,
+                        severity=severity,
+                        payload=payload
+                    )
+                    return True
+            except Exception as e:
+                logger.error(f"Failed to send alert to {channel}: {str(e)}")
+                return False
+
+        tasks = [send_to_channel(channel) for channel in channels]
+        results_list = await asyncio.gather(*tasks)
+
+        for channel, result in zip(channels, results_list):
+            results[channel] = result
+
+        return results
+
+    async def send_report_notification(
+        self,
+        report_id: str,
+        report_type: str,
+        status: str,
+        download_url: Optional[str] = None,
+        retry: bool = True
+    ) -> bool:
+        """
+        Send a notification about a generated report.
+
+        Args:
+            report_id: Unique identifier for the report
+            report_type: Type of report generated
+            status: Report generation status
+            download_url: Optional URL to download the report
+            retry: Whether to retry sending the notification if it fails
+
+        Returns:
+            bool indicating success
+        """
+        if not await self.rate_limiter.check_rate_limit('send_report'):
+            logger.warning("Rate limit exceeded for send_report")
+            return False
+
+        message = f"Report {report_id} ({report_type}) has been {status}"
+        if download_url:
+            message += f"\nDownload URL: {download_url}"
+
+        try:
+            if retry:
+                return await self._send_with_retry(
+                    'email',
+                    subject=f"Report Notification: {report_type}",
+                    content=message,
+                    severity="info"
+                )
+            else:
+                await send_email_alert(
+                    subject=f"Report Notification: {report_type}",
+                    content=message,
+                    severity="info"
+                )
+                return True
+        except Exception as e:
+            logger.error(f"Failed to send report notification: {str(e)}")
+            return False
+
+    async def send_bulk_alerts(
+        self,
+        alerts: List[Dict[str, Any]],
+        channels: Optional[List[str]] = None
+    ) -> Dict[str, List[bool]]:
+        results = {channel: [] for channel in (channels or self.channels.keys())}
+
+        for alert in alerts:
+            alert_results = await self.send_alert(
+                alert_type=alert['type'],
+                severity=alert['severity'],
+                message=alert['message'],
+                payload=alert.get('payload'),
+                channels=channels
+            )
+
+            for channel, result in alert_results.items():
+                results[channel].append(result)
+
+        return results
+
+    def get_channel_status(self) -> Dict[str, bool]:
+        return {
+            channel: bool(settings.get(f"{channel.upper()}_WEBHOOK_URL"))
+            for channel in self.channels.keys()
+        }
 
 # Instantiate the client for use in endpoints
 alert_client = AlertingClient()

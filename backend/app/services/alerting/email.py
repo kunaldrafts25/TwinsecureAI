@@ -5,6 +5,120 @@ from email.header import Header
 from email.utils import formataddr, formatdate
 from app.core.config import settings, logger
 import asyncio # Use asyncio's thread pool for blocking smtplib
+from typing import Dict, Any, List, Union, Optional
+
+class EmailAlerter:
+    """Class for sending alerts via email."""
+
+    def __init__(self, smtp_server: str, smtp_port: int = 587,
+                 username: Optional[str] = None, password: Optional[str] = None,
+                 from_email: str = "alerts@example.com",
+                 to_emails: Union[str, List[str]] = None,
+                 use_tls: bool = True):
+        """
+        Initialize the email alerter.
+
+        Args:
+            smtp_server: SMTP server hostname
+            smtp_port: SMTP server port
+            username: SMTP username
+            password: SMTP password
+            from_email: Sender email address
+            to_emails: Recipient email address(es)
+            use_tls: Whether to use TLS
+        """
+        self.smtp_server = smtp_server
+        self.smtp_port = smtp_port
+        self.username = username
+        self.password = password
+        self.from_email = from_email
+
+        if isinstance(to_emails, str):
+            self.to_emails = [to_emails]
+        elif isinstance(to_emails, list):
+            self.to_emails = to_emails
+        else:
+            self.to_emails = []
+
+        self.use_tls = use_tls
+
+    async def send_alert(self, alert_data: Dict[str, Any]) -> bool:
+        """
+        Send an alert via email.
+
+        Args:
+            alert_data: Dictionary containing alert information
+
+        Returns:
+            bool: True if the alert was sent successfully, False otherwise
+        """
+        try:
+            # Extract alert information
+            title = alert_data.get("title", "Security Alert")
+            severity = alert_data.get("severity", "MEDIUM")
+            description = alert_data.get("description", "")
+
+            # Create subject and content
+            subject = f"{severity} Alert: {title}"
+            content = f"Alert: {title}\nSeverity: {severity}\n\n{description}"
+
+            # Add additional information if available
+            if "id" in alert_data:
+                content += f"\n\nAlert ID: {alert_data['id']}"
+
+            # Send the email
+            await self._send_email(subject, content)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send email alert: {str(e)}")
+            return False
+
+    async def _send_email(self, subject: str, content: str) -> None:
+        """
+        Send an email using SMTP.
+
+        Args:
+            subject: Email subject
+            content: Email content
+        """
+        # Create message
+        message = MIMEMultipart()
+        message["Subject"] = subject
+        message["From"] = self.from_email
+        message["To"] = ", ".join(self.to_emails)
+        message["Date"] = formatdate(localtime=True)
+
+        # Attach content
+        part = MIMEText(content, "plain")
+        message.attach(part)
+
+        # Define synchronous function to send email
+        def send_sync():
+            smtp = None
+            try:
+                # Connect to SMTP server
+                smtp = smtplib.SMTP(self.smtp_server, self.smtp_port)
+
+                # Use TLS if enabled
+                if self.use_tls:
+                    smtp.starttls()
+
+                # Login if credentials provided
+                if self.username and self.password:
+                    smtp.login(self.username, self.password)
+
+                # Send email
+                smtp.send_message(message)
+
+                return True
+            finally:
+                # Close connection
+                if smtp:
+                    smtp.quit()
+
+        # Run synchronous function in thread pool
+        await asyncio.to_thread(send_sync)
+
 
 async def send_email_alert(subject: str, content: str):
     """

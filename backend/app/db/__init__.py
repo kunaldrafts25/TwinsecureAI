@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings, logger
 from app.db import crud
-from app.schemas import UserCreate
+from app.schemas.user_schema import UserCreate
+from app.core.enums import UserRole
 
 async def init_db(db: AsyncSession) -> None:
     """
@@ -13,9 +14,10 @@ async def init_db(db: AsyncSession) -> None:
         logger.info(f"Creating superuser: {settings.FIRST_SUPERUSER}")
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
+            password=settings.FIRST_SUPERUSER_PASSWORD.get_secret_value(),
             is_superuser=True,
             is_active=True,
+            role=UserRole.ADMIN  # Superuser must have ADMIN role
         )
         try:
             user = await crud.user.create(db=db, obj_in=user_in)

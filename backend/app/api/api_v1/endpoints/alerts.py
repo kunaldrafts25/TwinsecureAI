@@ -9,8 +9,8 @@ from app.schemas import Alert, AlertCreate, AlertUpdate, AlertQueryFilters
 from app.db.models import User # Import User model for dependency
 from app.core.dependencies import get_current_active_user # Or get_current_active_superuser if needed
 from app.core.config import logger
-# Import alerting services if triggering alerts from here (less common for GET/PATCH)
-# from app.services.alerting.client import alert_client
+# Import alerting services
+from app.services.alerting.client import alert_client
 
 router = APIRouter()
 
@@ -63,8 +63,23 @@ async def create_alert(
     logger.info(f"User {current_user.email} attempting to create alert: {alert_in.model_dump(exclude_none=True)}")
     alert = await crud.alert.create(db=db, obj_in=alert_in)
     logger.info(f"Alert created successfully with ID: {alert.id}")
-    # Optionally trigger notifications here if manual creation should also alert
-    # await alert_client.send_alert(alert_data=alert)
+
+    # Send alert notifications
+    try:
+        alert_data = {
+            "id": str(alert.id),
+            "title": alert.title or f"{alert.severity.value} Alert",
+            "severity": alert.severity.value,
+            "description": alert.description or "No description provided",
+            "source_ip": str(alert.source_ip) if alert.source_ip else None,
+            "created_at": alert.created_at.isoformat() if alert.created_at else None
+        }
+
+        notification_results = await alert_client.send_alert(alert_data=alert_data)
+        logger.info(f"Alert notifications sent with results: {notification_results}")
+    except Exception as e:
+        logger.error(f"Failed to send alert notifications: {str(e)}")
+
     return alert
 
 @router.patch("/{alert_id}", response_model=Alert)
@@ -85,8 +100,29 @@ async def update_alert(
         logger.warning(f"Update failed: Alert not found: {alert_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
 
+    # Check if status is being updated
+    status_changed = hasattr(alert_in, "status") and alert_in.status is not None and alert_in.status != db_alert.status
+
     updated_alert = await crud.alert.update(db=db, db_obj=db_alert, obj_in=alert_in)
     logger.info(f"Alert {alert_id} updated successfully.")
+
+    # Send notification if status changed
+    if status_changed:
+        try:
+            alert_data = {
+                "id": str(updated_alert.id),
+                "title": f"Alert Status Changed: {updated_alert.title or 'Alert'}",
+                "severity": updated_alert.severity.value,
+                "description": f"Alert status changed to: {updated_alert.status.value}. {updated_alert.description or ''}",
+                "source_ip": str(updated_alert.source_ip) if updated_alert.source_ip else None,
+                "updated_at": updated_alert.updated_at.isoformat() if updated_alert.updated_at else None
+            }
+
+            notification_results = await alert_client.send_alert(alert_data=alert_data)
+            logger.info(f"Alert status change notifications sent with results: {notification_results}")
+        except Exception as e:
+            logger.error(f"Failed to send alert status change notifications: {str(e)}")
+
     return updated_alert
 
 # Optional: Add DELETE endpoint if needed (requires permissions)

@@ -7,9 +7,10 @@ from app.db.session import get_db
 from app.schemas import HoneypotData, AlertCreate # Use AlertCreate for DB entry
 from app.core.config import logger
 # Import enrichment and alerting services
-from app.services.enrichment.geoip import get_geoip_data # Placeholder
-from app.services.enrichment.abuseipdb import get_abuseipdb_score # Placeholder
-from app.services.alerting.client import alert_client # Placeholder
+from app.services.enrichment.geoip import get_geoip_data
+from app.services.enrichment.abuseipdb import get_abuseipdb_score
+from app.services.alerting.client import alert_client
+from app.services.validation import validate_ip
 
 router = APIRouter()
 
@@ -22,10 +23,16 @@ async def process_honeypot_data(db: AsyncSession, data: HoneypotData):
     abuse_score = None
     alert_payload = data.model_dump() # Use the raw data as part of the alert payload
 
+    # Validate IP address
+    ip_str = str(data.source_ip)
+    if not validate_ip(ip_str):
+        logger.warning(f"Invalid IP address format: {ip_str}")
+        return
+
     try:
         # 1. Enrich IP address (GeoIP, AbuseIPDB)
-        ip_info = await get_geoip_data(str(data.source_ip)) # Ensure IP is string
-        abuse_score = await get_abuseipdb_score(str(data.source_ip)) # Ensure IP is string
+        ip_info = await get_geoip_data(ip_str)
+        abuse_score = await get_abuseipdb_score(ip_str)
         logger.debug(f"Enrichment for {data.source_ip}: Geo={ip_info}, AbuseScore={abuse_score}")
 
         # 2. Create Alert record in database
@@ -90,10 +97,11 @@ async def receive_honeypot_trigger(
     #     logger.warning(f"Unauthorized honeypot access attempt from {request.client.host}")
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or missing secret header")
 
-    logger.info(f"Received honeypot trigger from IP: {honeypot_data.source_ip}")
+    client_ip = request.client.host if request.client else "unknown"
+    logger.info(f"Received honeypot trigger from client IP: {client_ip}, for source IP: {honeypot_data.source_ip}")
 
     # Add processing to background tasks to respond quickly
     background_tasks.add_task(process_honeypot_data, db, honeypot_data)
 
     logger.debug("Honeypot data processing added to background task queue.")
-    return {"message": "Honeypot data received and queued for processing."}
+    return {"message": "Honeypot data received and queued for processing.", "client_ip": client_ip}

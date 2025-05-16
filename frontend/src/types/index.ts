@@ -1,108 +1,167 @@
+// User types
+// Backend uses different role enum, we need to map it
+export type UserRole = 'admin' | 'analyst' | 'viewer' | 'api_user';
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  is_superuser: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+// Auth types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+// Alert types
+export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type AlertStatus = 'new' | 'acknowledged' | 'in_progress' | 'resolved' | 'false_positive';
+
+export interface IpInfo {
+  country: string;
+  city: string;
+  asn: string;
+  org: string;
+}
+
 export interface Alert {
   id: string;
-  type: 'Honeypot Triggered' | 'Anomaly Detected' | 'Brute Force' | 'SQL Injection' | 'XSS Attempt';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  ip: string;
-  location: string;
-  country: string;
-  payload?: string;
-  timestamp: string;
-  status: 'new' | 'investigating' | 'resolved' | 'false-positive';
-  enrichment?: {
-    abuseScore?: number;
-    previousIncidents?: number;
-    knownMalicious?: boolean;
-  };
+  alert_type: string;
+  source_ip: string;
+  destination_ip: string;
+  ip_info: IpInfo;
+  payload_snippet: string;
+  raw_log_id: string;
+  honeypot_id: string;
+  digital_twin_asset_id: string;
+  abuse_score: number;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  notes: string;
+  mitre_ttp_codes: string[];
+  assigned_to_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
 }
 
-export interface AttackOrigin {
-  country: string;
-  count: number;
-  coordinates: [number, number];
+export interface AlertFilters {
+  alert_type?: string;
+  severity?: AlertSeverity;
+  status?: AlertStatus;
+  source_ip?: string;
+  honeypot_id?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
-export interface AttackTrend {
-  date: string;
-  honeypotHits: number;
-  blockedAttacks: number;
-  anomalies: number;
-}
-
-export interface PayloadType {
-  type: string;
-  count: number;
-  percentage: number;
-}
-
-export interface SystemMetric {
-  timestamp: string;
-  cpu: number;
-  memory: number;
-  requests: number;
-  errorRate: number;
-}
-
-export interface Report {
-  id: string;
-  title: string;
-  date: string;
-  summary: string;
-  downloadUrl: string;
-  type: 'weekly' | 'monthly' | 'incident' | 'audit';
-  status: 'draft' | 'published';
-}
-
-export interface HoneypotEvent {
-  id: string;
-  timestamp: string;
-  ip: string;
-  location: string;
-  protocol: string;
-  port: number;
-  payload: string;
-  tags: string[];
-  malwareSignature?: string;
-}
-
-export interface AnomalyEvent {
-  id: string;
-  timestamp: string;
-  type: 'network' | 'system' | 'application' | 'database' | 'user';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  metric: string;
-  expected: number;
-  actual: number;
-  description: string;
-}
-
-export interface SecurityMetric {
+// Honeypot types
+export interface Honeypot {
   id: string;
   name: string;
-  value: number;
-  trend: number;
-  status: 'good' | 'warning' | 'critical';
-  category: 'performance' | 'security' | 'compliance';
+  type: string;
+  status: 'active' | 'inactive' | 'engaged';
+  last_activity: string;
+  total_engagements: number;
+  created_at: string;
 }
 
-export interface ComplianceCheck {
+export interface HoneypotActivity {
   id: string;
-  standard: string;
-  control: string;
-  status: 'passed' | 'failed' | 'warning';
-  lastCheck: string;
-  nextCheck: string;
-  details: string;
-}
-
-export interface VulnerabilityScan {
-  id: string;
+  honeypot_id: string;
   timestamp: string;
-  target: string;
-  findings: {
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
+  source_ip: string;
+  action_type: string;
+  details: Record<string, any>;
+}
+
+// Report types
+export interface Report {
+  id: string;
+  name: string;
+  type: string;
+  created_at: string;
+  download_url: string;
+}
+
+// System metrics
+export interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  components: {
+    api: 'up' | 'down';
+    database: 'up' | 'down';
+    honeypots: 'up' | 'down';
   };
-  status: 'complete' | 'in-progress' | 'scheduled';
+  last_updated: string;
+}
+
+export interface SecurityMetrics {
+  total_alerts: number;
+  alerts_by_severity: Record<AlertSeverity, number>;
+  alerts_by_status: Record<AlertStatus, number>;
+  top_attack_vectors: AttackVector[];
+  top_attackers: Attacker[];
+  risk_score: number;
+}
+
+// Dashboard specific types
+export interface AlertTrend {
+  date: string;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  info: number;
+}
+
+export interface AlertSeverityDistribution {
+  name: AlertSeverity;
+  value: number;
+  color: string;
+}
+
+export interface AttackVector {
+  name: string;
+  count: number;
+  percentage?: number;
+}
+
+export interface Attacker {
+  ip: string;
+  country: string;
+  count: number;
+  last_seen?: string;
+}
+
+export interface ComplianceStatus {
+  dpdp: { status: string; compliant: boolean; last_checked?: string };
+  gdpr: { status: string; compliant: boolean; last_checked?: string };
+  iso27001: { status: string; compliant: boolean; last_checked?: string };
+}
+
+export interface DigitalTwinStatus {
+  activeTwins: number;
+  honeypots: number;
+  engagements: number;
+  last_engagement?: string;
+}
+
+// Dashboard filter types
+export interface DashboardFilters {
+  timeRange: '24h' | '7d' | '30d' | '90d' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  refreshInterval: number | null; // null means no auto-refresh, number is seconds
 }

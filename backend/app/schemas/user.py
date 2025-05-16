@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, UUID4
 from typing import Optional
 from datetime import datetime
+from app.db.models.enums import UserRole
 
 # --- Base Schemas ---
 # Properties shared by all user-related schemas
@@ -9,7 +10,7 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     is_superuser: bool = False
     full_name: Optional[str] = None
-    # role: Optional[str] = "analyst" # Add role if using
+    role: Optional[UserRole] = UserRole.ADMIN  # Default role for superuser
 
 # Properties required when creating a user
 class UserCreate(UserBase):

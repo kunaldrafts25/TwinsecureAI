@@ -1,0 +1,126 @@
+name: TwinSecure Load Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      users:
+        description: 'Number of users to simulate'
+        required: true
+        default: '50'
+      spawn_rate:
+        description: 'Rate at which users are spawned'
+        required: true
+        default: '10'
+      run_time:
+        description: 'Duration of the test'
+        required: true
+        default: '5m'
+      tags:
+        description: 'Tags to include (comma-separated)'
+        required: false
+      exclude_tags:
+        description: 'Tags to exclude (comma-separated)'
+        required: false
+  schedule:
+    # Run load tests every Monday at 3:00 AM
+    - cron: '0 3 * * 1'
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_twinsecure
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd backend
+        pip install -r requirements.txt
+        pip install locust pytest-cov
+    
+    - name: Start API server
+      run: |
+        cd backend
+        nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 5  # Wait for server to start
+    
+    - name: Run load tests
+      run: |
+        cd backend
+        python tests/run_load_test.py \
+          --host http://localhost:8000 \
+          --users ${{ github.event.inputs.users || '50' }} \
+          --spawn-rate ${{ github.event.inputs.spawn_rate || '10' }} \
+          --run-time ${{ github.event.inputs.run_time || '5m' }} \
+          --tags ${{ github.event.inputs.tags }} \
+          --exclude-tags ${{ github.event.inputs.exclude_tags }} \
+          --csv --html --json
+    
+    - name: Upload load test reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-reports
+        path: backend/load_test_reports/
+    
+    - name: Generate load test summary
+      run: |
+        cd backend
+        echo "# Load Test Results" > load_test_summary.md
+        echo "" >> load_test_summary.md
+        echo "## Test Parameters" >> load_test_summary.md
+        echo "- Users: ${{ github.event.inputs.users || '50' }}" >> load_test_summary.md
+        echo "- Spawn Rate: ${{ github.event.inputs.spawn_rate || '10' }}" >> load_test_summary.md
+        echo "- Run Time: ${{ github.event.inputs.run_time || '5m' }}" >> load_test_summary.md
+        echo "- Tags: ${{ github.event.inputs.tags || 'all' }}" >> load_test_summary.md
+        echo "- Exclude Tags: ${{ github.event.inputs.exclude_tags || 'none' }}" >> load_test_summary.md
+        echo "" >> load_test_summary.md
+        echo "## Results" >> load_test_summary.md
+        echo "See attached artifacts for detailed results." >> load_test_summary.md
+        
+        # Add JSON results if available
+        LATEST_JSON=$(ls -t load_test_reports/*.json 2>/dev/null | head -1)
+        if [ -n "$LATEST_JSON" ]; then
+          echo "" >> load_test_summary.md
+          echo "## Summary Statistics" >> load_test_summary.md
+          echo '```json' >> load_test_summary.md
+          cat $LATEST_JSON >> load_test_summary.md
+          echo '```' >> load_test_summary.md
+        fi
+    
+    - name: Create load test summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-summary
+        path: backend/load_test_summary.md
+    
+    - name: Send notification
+      if: always()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: monitoring
+        SLACK_TITLE: Load Test Results
+        SLACK_MESSAGE: "Load test completed. See workflow for details."
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_FOOTER: "TwinSecure Load Tests"

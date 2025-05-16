@@ -1,8 +1,102 @@
 import httpx
-from app.core.config import settings, logger
+import logging
+from app.core.config import settings
 from app.schemas import Alert # Import Alert schema for type hinting
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone # Import datetime and timezone
+
+logger = logging.getLogger(__name__)
+
+class DiscordAlerter:
+    """Class for sending alerts to Discord."""
+
+    def __init__(self, webhook_url: str):
+        """
+        Initialize the Discord alerter.
+
+        Args:
+            webhook_url: Discord webhook URL
+        """
+        self.webhook_url = webhook_url
+
+    async def send_alert(self, alert_data: Dict[str, Any]) -> bool:
+        """
+        Send an alert to Discord.
+
+        Args:
+            alert_data: Dictionary containing alert information
+
+        Returns:
+            bool: True if the alert was sent successfully, False otherwise
+        """
+        try:
+            # Extract alert information
+            title = alert_data.get("title", "Security Alert")
+            severity = alert_data.get("severity", "MEDIUM")
+            description = alert_data.get("description", "")
+
+            # Create embed
+            embed = {
+                "title": title[:256],  # Discord has a 256 character limit for titles
+                "description": description[:4096],  # Discord has a 4096 character limit for descriptions
+                "color": self._get_color_for_severity(severity),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "fields": []
+            }
+
+            # Add severity field
+            embed["fields"].append({
+                "name": "Severity",
+                "value": severity,
+                "inline": True
+            })
+
+            # Add alert ID if available
+            if "id" in alert_data:
+                embed["fields"].append({
+                    "name": "Alert ID",
+                    "value": alert_data["id"],
+                    "inline": True
+                })
+
+            # Create payload
+            payload = {
+                "username": "TwinSecure Bot",
+                "embeds": [embed]
+            }
+
+            # Send message
+            async with httpx.AsyncClient() as client:
+                response = await client.post(self.webhook_url, json=payload)
+                response.raise_for_status()
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send Discord alert: {str(e)}")
+            return False
+
+    def _get_color_for_severity(self, severity: str) -> int:
+        """
+        Get the color code for a severity level.
+
+        Args:
+            severity: Severity level
+
+        Returns:
+            int: Color code
+        """
+        severity = severity.upper()
+        if severity == "CRITICAL":
+            return 0xFF0000  # Red
+        elif severity == "HIGH":
+            return 0xFF7F00  # Orange
+        elif severity == "MEDIUM":
+            return 0xFFFF00  # Yellow
+        elif severity == "LOW":
+            return 0x00FF00  # Green
+        else:
+            return 0x0000FF  # Blue
+
 
 async def send_discord_message(title: str, details: str, alert_data: Optional[Alert] = None):
     """

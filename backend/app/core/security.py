@@ -3,15 +3,16 @@ from typing import Optional, Any, Union
 from uuid import UUID
 
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 
 from app.core.config import settings, logger
+from app.core.password import verify_password, get_password_hash
 from app.schemas import TokenPayload
 
-# Password hashing context using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-ALGORITHM = settings.ALGORITHM
+# JWT settings
+ALGORITHM = settings.SECURITY__ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = settings.SECURITY__REFRESH_TOKEN_EXPIRE_DAYS
+SECRET_KEY = settings.SECURITY__SECRET_KEY.get_secret_value()
 
 def create_access_token(subject: Union[str, UUID, Any], expires_delta: Optional[timedelta] = None) -> str:
     """
@@ -27,37 +28,14 @@ def create_access_token(subject: Union[str, UUID, Any], expires_delta: Optional[
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {"exp": expire, "sub": str(subject)} # Ensure subject is a string
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     logger.debug(f"Created access token for subject {subject} expiring at {expire}")
     return encoded_jwt
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifies a plain password against a hashed password.
 
-    Args:
-        plain_password: The plain text password.
-        hashed_password: The hashed password from the database.
-
-    Returns:
-        True if the password matches, False otherwise.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    """
-    Hashes a plain password using the configured context.
-
-    Args:
-        password: The plain text password.
-
-    Returns:
-        The hashed password string.
-    """
-    return pwd_context.hash(password)
 
 def decode_token(token: str) -> Optional[TokenPayload]:
     """
@@ -70,7 +48,7 @@ def decode_token(token: str) -> Optional[TokenPayload]:
         The TokenPayload schema instance or None if decoding fails or token is invalid/expired.
     """
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         # Explicitly create TokenPayload to handle potential missing 'sub' or validate type
         token_data = TokenPayload(sub=payload.get("sub"))
         # Optional: Add more validation here, e.g., check 'exp' claim validity more strictly if needed

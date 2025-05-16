@@ -34,11 +34,14 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), ".."
 target_metadata = Base.metadata # Use the metadata from your Base
 
 # Use DATABASE_URL from your application settings
-# Alembic reads this from alembic.ini, which references the env var
+# Instead of setting it in the config, we'll use it directly in the engine creation
 db_url = settings.DATABASE_URL
 if not db_url:
     raise ValueError("DATABASE_URL environment variable is not set for Alembic.")
-config.set_main_option("sqlalchemy.url", db_url)
+
+# Print the database URL for debugging
+print(f"Database URL: {db_url}")
+
 # --- END TwinSecure Configuration ---
 
 
@@ -60,15 +63,12 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # Use the db_url directly instead of getting it from config
     context.configure(
-        url=url,
+        url=db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        # Add naming convention if not already in Base.metadata
-        # include_schemas=True, # Set to True if using schemas
-        # version_table_schema=target_metadata.schema, # If using schema for alembic table
         compare_type=True, # Compare column types during autogenerate
     )
 
@@ -82,11 +82,8 @@ def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        # Add naming convention if not already in Base.metadata
-        # include_schemas=True, # Set to True if using schemas
-        # version_table_schema=target_metadata.schema, # If using schema for alembic table
         compare_type=True, # Compare column types during autogenerate
-        )
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -98,16 +95,15 @@ async def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Create an async engine
+    # Create an async engine using the db_url directly
     connectable = create_async_engine(
-        config.get_main_option("sqlalchemy.url"),
+        db_url,
         poolclass=pool.NullPool, # Use NullPool for migrations
     )
 
     # Acquire an async connection
     async with connectable.connect() as connection:
         # Run the migrations within the transaction context of the async connection
-        # We use run_sync to execute the synchronous do_run_migrations function
         await connection.run_sync(do_run_migrations)
 
     # Dispose of the engine

@@ -1,8 +1,93 @@
 import requests
-from typing import Optional # Import Optional for type hinting
+import httpx
+import asyncio
+import logging
+from typing import Optional, Dict, Any, List
 
-# Import settings if the webhook URL comes from config
-# from app.core.config import settings
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+class SlackAlerter:
+    """Class for sending alerts to Slack."""
+
+    def __init__(self, webhook_url: str, channel: Optional[str] = None):
+        """
+        Initialize the Slack alerter.
+
+        Args:
+            webhook_url: Slack webhook URL
+            channel: Optional Slack channel to send messages to
+        """
+        self.webhook_url = webhook_url
+        self.channel = channel
+
+    async def send_alert(self, alert_data: Dict[str, Any]) -> bool:
+        """
+        Send an alert to Slack.
+
+        Args:
+            alert_data: Dictionary containing alert information
+
+        Returns:
+            bool: True if the alert was sent successfully, False otherwise
+        """
+        try:
+            # Extract alert information
+            title = alert_data.get("title", "Security Alert")
+            severity = alert_data.get("severity", "MEDIUM")
+            description = alert_data.get("description", "")
+
+            # Create message blocks
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"{severity} Alert: {title}",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": description
+                    }
+                }
+            ]
+
+            # Add alert ID if available
+            if "id" in alert_data:
+                blocks.append({
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Alert ID:* {alert_data['id']}"
+                        }
+                    ]
+                })
+
+            # Create payload
+            payload = {
+                "blocks": blocks
+            }
+
+            # Add channel if specified
+            if self.channel:
+                payload["channel"] = self.channel
+
+            # Send message
+            async with httpx.AsyncClient() as client:
+                response = await client.post(self.webhook_url, json=payload)
+                response.raise_for_status()
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send Slack alert: {str(e)}")
+            return False
+
 
 def send_slack_message(message: str, webhook_url: str) -> Optional[requests.Response]:
     """
@@ -28,29 +113,14 @@ def send_slack_message(message: str, webhook_url: str) -> Optional[requests.Resp
         # Raise an exception for bad status codes (4xx or 5xx)
         response.raise_for_status()
 
-        print(f"Slack message sent successfully. Status code: {response.status_code}")
+        logger.info(f"Slack message sent successfully. Status code: {response.status_code}")
         return response
 
     except requests.exceptions.RequestException as e:
         # Handle any errors that occur during the request
-        print(f"Failed to send Slack message: {e}")
+        logger.error(f"Failed to send Slack message: {e}")
         return None
     except Exception as e:
         # Catch any other unexpected errors
-        print(f"An unexpected error occurred while sending Slack message: {e}")
+        logger.error(f"An unexpected error occurred while sending Slack message: {e}")
         return None
-
-# You might have other functions related to Slack integration here,
-# for example, formatting messages, handling different message types, etc.
-
-# Example usage (for testing purposes, not typically run directly)
-# if __name__ == "__main__":
-#     # Replace with a real webhook URL for testing
-#     test_webhook_url = "YOUR_SLACK_WEBHOOK_URL_HERE"
-#     test_message = "Hello from the backend application!"
-#
-#     if "YOUR_SLACK_WEBHOOK_URL_HERE" in test_webhook_url:
-#          print("Please replace 'YOUR_SLACK_WEBHOOK_URL_HERE' with your actual Slack webhook URL to test.")
-#     else:
-#         print(f"Attempting to send test message: '{test_message}'")
-#         send_slack_message(test_message, test_webhook_url)

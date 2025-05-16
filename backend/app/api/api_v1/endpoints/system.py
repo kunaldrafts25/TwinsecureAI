@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Any
+from typing import Any, Dict
 import datetime
 
 from app.schemas import SystemStatus, SystemMetrics, ServiceStatus # Import relevant schemas
 from app.db.models import User
 from app.core.dependencies import get_current_active_user
 from app.core.config import logger
+from app.db.session import AsyncSessionLocal
 # Import Prometheus client library if directly querying Prometheus
 # from prometheus_client import CollectorRegistry, Gauge, push_to_gateway # Example
 
@@ -83,6 +84,37 @@ async def get_system_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve system status."
         )
+
+@router.get("/health", response_model=Dict[str, Any])
+async def get_system_health():
+    """
+    Health check endpoint for the system.
+    This endpoint is used by monitoring tools to check if the system is up and running.
+    It does not require authentication to allow for external monitoring.
+    """
+    logger.info("Health check requested")
+
+    health_status = {
+        "status": "ok",
+        "components": {
+            "database": "ok",
+            "cache": "ok",
+            "storage": "ok"
+        },
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
+
+    # Check database connectivity
+    try:
+        async with AsyncSessionLocal() as db:
+            from sqlalchemy import text
+            await db.execute(text("SELECT 1"))
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        health_status["components"]["database"] = "error"
+        health_status["status"] = "error"
+
+    return health_status
 
 # Optional: Add endpoint to expose metrics for Prometheus scraping if needed
 # This usually involves using the prometheus-fastapi-instrumentator library

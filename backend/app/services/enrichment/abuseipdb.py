@@ -1,6 +1,64 @@
 import httpx
-from app.core.config import settings, logger
+import logging
+from app.core.config import settings
 from typing import Optional, Dict, Any
+
+logger = logging.getLogger(__name__)
+
+class AbuseIPDBClient:
+    """Client for checking IP addresses against AbuseIPDB."""
+
+    def __init__(self, api_key: str, api_url: str = "https://api.abuseipdb.com/api/v2/check"):
+        """
+        Initialize the AbuseIPDB client.
+
+        Args:
+            api_key: AbuseIPDB API key
+            api_url: AbuseIPDB API URL
+        """
+        self.api_key = api_key
+        self.api_url = api_url
+
+    async def check_ip(self, ip_address: str, max_age_days: int = 90) -> Optional[Dict[str, Any]]:
+        """
+        Check an IP address against AbuseIPDB.
+
+        Args:
+            ip_address: IP address to check
+            max_age_days: Maximum age of reports to consider
+
+        Returns:
+            Dict containing IP information or None if an error occurs
+        """
+        try:
+            # Set up headers and parameters
+            headers = {
+                "Accept": "application/json",
+                "Key": self.api_key
+            }
+            params = {
+                "ipAddress": ip_address,
+                "maxAgeInDays": str(max_age_days),
+                "verbose": ""  # Include verbose data
+            }
+
+            # Make request
+            async with httpx.AsyncClient() as client:
+                response = await client.get(self.api_url, headers=headers, params=params)
+                response.raise_for_status()
+
+                data = response.json()
+
+                # Check if data is valid
+                if isinstance(data.get("data"), dict):
+                    return data["data"]
+                else:
+                    logger.warning(f"Invalid response format from AbuseIPDB for IP {ip_address}")
+                    return None
+        except Exception as e:
+            logger.error(f"Error checking IP {ip_address} with AbuseIPDB: {str(e)}")
+            return None
+
 
 async def get_abuseipdb_score(ip_address: str) -> Optional[int]:
     """

@@ -1,0 +1,34 @@
+[run]
+source = app
+omit =
+    */tests/*
+    */migrations/*
+    */alembic/*
+    */venv/*
+    */site-packages/*
+    */__pycache__/*
+    */.pytest_cache/*
+    */conftest.py
+    */setup.py
+    */wsgi.py
+    */asgi.py
+    */settings.py
+    */config.py
+    */manage.py
+    */db/base.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError
+    def __str__
+    def __unicode__
+    def __bytes__
+    
+[html]
+directory = coverage_html_report

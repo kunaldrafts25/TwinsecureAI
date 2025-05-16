@@ -3,6 +3,9 @@
 uvicorn[standard]>=0.27.0,<0.28.0
 fastapi[all]>=0.110.0,<0.111.0
 python-multipart
+pydantic>=2.0.0,<2.1.0
+pydantic-settings>=2.0.0,<2.1.0
+pydantic[email]>=2.0.0,<2.1.0
 
 # Database
 sqlalchemy[asyncio]>=2.0.0,<2.1.0
@@ -22,28 +25,39 @@ httpx>=0.27.0,<0.28.0
 
 # Alerting
 slack_sdk>=3.20.0,<3.21.0 # If using Slack SDK (alternative to simple webhook)
+backoff>=2.2.1,<2.3.0 # For retry logic in alerting
+boto3>=1.34.0,<1.35.0  # For AWS integration
 
 # PDF Generation (Choose one or both)
-# WeasyPrint>=60.0,<61.0 # Needs system dependencies (Pango, Cairo, GDK-PixBuf)
-# pdfkit>=1.0.0,<1.1.0 # Needs wkhtmltopdf installed
+weasyprint>=60.0,<61.0  # Optional
+pdfkit>=1.0.0,<1.1.0    # Optional
 reportlab>=4.0.0,<4.1.0 # Another option for PDF generation
 
 # GeoIP
 geoip2>=4.7.0,<4.8.0
 
-# ML (Optional - Install if using the ML module)
-# tensorflow>=2.15.0,<2.16.0 # Or tensorflow-cpu
-# pandas>=2.0.0,<2.1.0 # Often used with ML data
-# scikit-learn>=1.3.0,<1.4.0 # For preprocessing, etc.
-
-# Rate Limiting (Optional)
-# slowapi>=0.1.9,<0.2.0
+# Rate Limiting
+slowapi>=0.1.9,<0.2.0
 
 # Optional: For better logging formatting
-# loguru>=0.7.0,<0.8.0
+loguru>=0.7.0,<0.8.0
+
+# Monitoring
+prometheus-client>=0.19.0,<0.20.0
 
 # Development/Testing
 pytest>=8.0.0,<8.1.0
 pytest-asyncio>=0.23.0,<0.24.0
 requests>=2.31.0,<2.32.0 # For testing API endpoints
 
+# Scheduling
+schedule>=1.2.0,<1.3.0  # For ML training scheduling
+
+# AWS Integration
+botocore>=1.34.0,<1.35.0
+
+# ML (Optional - Install if using the ML module)
+tensorflow>=2.16.0  # Or tensorflow-cpu
+pandas>=2.0.0,<2.1.0
+scikit-learn>=1.3.0,<1.4.0
+numpy>=1.24.0,<1.25.0

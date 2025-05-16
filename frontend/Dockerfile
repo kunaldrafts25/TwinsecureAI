@@ -1,53 +1,36 @@
-# project/Dockerfile
-
-# --- Stage 1: Build ---
-# Use an official Node.js LTS version as a parent image (Alpine for smaller size)
-# Check Nodejs.org for the current LTS version (e.g., 20)
-FROM node:20-alpine AS builder
+# Development Dockerfile for TwinSecure Frontend
+FROM node:20-alpine
 
 # Set the working directory in the container
 WORKDIR /app
 
-COPY . .
-COPY package.json package-lock.json ./
+# Copy package files first to leverage Docker cache
 COPY package*.json ./
-# If using yarn:
-# COPY yarn.lock ./
 
-# Install dependencies using npm ci for cleaner installs matching lock file
-RUN npm ci --legacy-peer-deps
-
-RUN npm install
-RUN rm -rf node_modules package-lock.json && npm install
-RUN npm run build
+# Install dependencies with legacy peer deps to handle version conflicts
+RUN npm install --legacy-peer-deps
 
 # Copy the rest of the application code
-# (Respects .dockerignore)
 COPY . .
 
-# Build the React app for production
-# This runs the "build" script defined in your package.json (usually vite build)
-RUN npm run build
-# If using yarn:
-# RUN yarn build
+# Create a custom CSS file to fix styling issues
+RUN echo "/* Override CSS to fix styling issues */\n\n/* Fix for red background */\nbody, html {\n  background-color: #f8fafc !important; /* slate-50 - light default */\n  margin: 0;\n  padding: 0;\n}\n\n/* Fix for loading screen */\n.loading-screen {\n  background-color: #1e293b !important; /* slate-800 */\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  z-index: 9999;\n}\n\n/* Dark mode overrides */\n.dark body, .dark html {\n  background-color: #0f172a !important; /* slate-900 - dark default */\n}" > /app/src/override.css
 
-# --- Stage 2: Serve ---
-# Use a lightweight Nginx image
-FROM nginx:stable-alpine
+# Update the main.tsx file to import the override CSS
+RUN sed -i "s/import '.\/index.css';/import '.\/index.css';\nimport '.\/override.css'; \/\/ Import override CSS to fix styling issues/" /app/src/main.tsx
 
-# Remove default Nginx welcome page
-RUN rm -rf /usr/share/nginx/html/*
+# Update the LoadingScreen component to use the loading-screen class
+RUN sed -i 's/className="fixed inset-0 flex min-h-screen items-center justify-center bg-/className="loading-screen fixed inset-0 flex min-h-screen items-center justify-center bg-/' /app/src/components/common/LoadingScreen.tsx
 
-# Copy the build output from the 'builder' stage to Nginx's web server directory
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Update the vite.config.ts file to allow external access
+RUN sed -i 's/export default defineConfig({/export default defineConfig({\n  server: {\n    host: "0.0.0.0",\n    port: 5173,\n    strictPort: true,\n    watch: {\n      usePolling: true,\n    },\n  },/' vite.config.ts
 
-# Copy the custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Add environment variables for development
+ENV NODE_ENV=development
+ENV VITE_API_URL=http://localhost:8000/api/v1
 
-# Expose port 80 (the port Nginx listens on inside the container)
-EXPOSE 8000
+# Expose port for Vite dev server
+EXPOSE 5173
 
-# Command to run Nginx in the foreground when the container starts
-CMD [ "nginx", "-g", "daemon off", "npm", "run", "dev"]
-
-
+# Command to run the development server with host flag to ensure it's accessible
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

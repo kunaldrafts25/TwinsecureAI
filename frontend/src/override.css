@@ -1,0 +1,24 @@
+/* Override CSS to fix styling issues */
+
+/* Fix for red background */
+body, html {
+  background-color: #f8fafc !important; /* slate-50 - light default */
+  margin: 0;
+  padding: 0;
+}
+
+/* Fix for loading screen */
+.loading-screen {
+  background-color: #1e293b !important; /* slate-800 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+/* Dark mode overrides */
+.dark body, .dark html {
+  background-color: #0f172a !important; /* slate-900 - dark default */
+}
