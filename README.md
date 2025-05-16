@@ -58,7 +58,7 @@ TwinSecure follows a modern microservices architecture:
 - Python 3.11+ (for local backend development)
 - PostgreSQL 15+ (for local database development)
 
-### Quick Start with Docker
+### Quick Start with Setup Script
 
 1. Clone the repository:
    ```bash
@@ -66,12 +66,30 @@ TwinSecure follows a modern microservices architecture:
    cd TwinsecureAI
    ```
 
-2. Start the application stack:
+2. Run the setup script:
+
+   **Windows (PowerShell):**
+   ```powershell
+   .\setup.ps1
+   ```
+
+   **Linux/macOS:**
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+   Options:
+   - `--with-ml` or `-WithML`: Install ML dependencies
+   - `--dev-mode` or `-DevMode`: Install development dependencies
+   - `--force` or `-Force`: Force recreation of virtual environment
+
+3. Start the application stack:
    ```bash
    docker-compose up -d
    ```
 
-3. Access the application:
+4. Access the application:
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:8000/api/v1
    - API Documentation: http://localhost:8000/docs
@@ -95,7 +113,12 @@ TwinSecure follows a modern microservices architecture:
 
 3. Install dependencies:
    ```bash
+   # Install core dependencies
+   pip install --upgrade pip setuptools wheel
    pip install -r requirements.txt
+
+   # Optional: Install ML dependencies
+   pip install -r requirements-ml.txt
    ```
 
 4. Set up environment variables (copy from .env.example):
@@ -205,12 +228,23 @@ twinsecure/
 
 ```bash
 cd backend
+# Set PYTHONPATH to include the current directory
+export PYTHONPATH=$PYTHONPATH:$(pwd)  # On Windows: $env:PYTHONPATH = "$env:PYTHONPATH;$(pwd)"
 python -m pytest
 ```
 
 For coverage report:
 ```bash
 python -m pytest --cov=app --cov-report=html --cov-report=term
+```
+
+For running specific tests:
+```bash
+# Run only health check tests
+python -m pytest tests/test_health.py -v
+
+# Run API auth tests
+python -m pytest tests/test_api_auth.py -v
 ```
 
 ### Frontend Tests
