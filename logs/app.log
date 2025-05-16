@@ -2264,3 +2264,33 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-17 03:29:13,566 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
 2025-05-17 03:29:13,567 - tests.check_postgres - INFO - Tests will use SQLite instead
 2025-05-17 03:29:14,798 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:21:55,998 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:21:56,009 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:22:01,655 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:22:21,626 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:22:21,627 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:22:22,133 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:25:07,187 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:25:07,187 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:25:08,064 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:25:27,194 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:25:27,194 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:25:27,919 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:27:58,833 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:27:58,834 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:27:59,836 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:28:07,921 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:28:07,921 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:28:08,939 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:28:57,130 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:28:57,130 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:28:58,096 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:29:06,780 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:29:06,780 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:29:07,871 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:29:26,514 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:29:26,514 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:29:27,818 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 04:29:38,199 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 04:29:38,199 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 04:29:39,469 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb

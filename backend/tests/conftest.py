@@ -2,6 +2,19 @@
 Configuration file for pytest.
 This file sets up the Python path to allow importing from the app module
 and provides fixtures for testing.
+
+Fixtures provided:
+- client: FastAPI TestClient for testing endpoints
+- user_token, superuser_token: Mock JWT tokens
+- user_auth_headers, superuser_auth_headers: Authentication headers
+- db: Database session for testing
+- test_db_user, test_db_superuser: Test users in the database
+- test_db_alerts: Test alerts in the database
+- db_user_token, db_superuser_token: Real JWT tokens for database users
+- db_user_auth_headers, db_superuser_auth_headers: Authentication headers for database users
+- performance_timer: Timer for performance testing
+- db_session: Async database session for direct database access
+- override_get_db: Function to override the database dependency in FastAPI
 """
 import sys
 import os
@@ -221,11 +234,54 @@ if DB_IMPORTS_AVAILABLE:
         """
         return {"Authorization": f"Bearer {db_superuser_token}"}
 
+# Database session fixture for direct database access
+@pytest.fixture(scope="function")
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Create a fresh database session for each test.
+
+    This fixture provides direct access to the database session,
+    which is useful for tests that need to interact with the database
+    directly rather than through the API.
+
+    Returns:
+        AsyncSession: SQLAlchemy async session
+    """
+    # Initialize test database
+    await init_test_db()
+
+    # Create a new session for the test
+    async with get_test_db() as session:
+        yield session
+
+    # Clean up after the test
+    await cleanup_test_db()
+
+# Function to override the database dependency in FastAPI
+async def override_get_db():
+    """
+    Override the database dependency in FastAPI.
+
+    This function is used to replace the database dependency in FastAPI
+    with a test database session for testing.
+
+    Yields:
+        AsyncSession: SQLAlchemy async session
+    """
+    async with get_test_db() as session:
+        yield session
+
 # Performance testing fixtures
 @pytest.fixture(scope="function")
 def performance_timer():
     """
     Timer fixture for performance testing.
+
+    This fixture provides a simple timer for measuring the performance
+    of code blocks during testing.
+
+    Returns:
+        Timer: Timer object with start, stop, and duration methods
     """
     class Timer:
         def __init__(self):

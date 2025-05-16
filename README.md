@@ -259,5 +259,5 @@ TwinSecure includes a comprehensive monitoring stack:
 ---
 
 <p align="center">
-  Made with ❤️ by Your Team
+  Made with ❤️ by Our Team
 </p>

@@ -71,6 +71,12 @@ services:
       - EMAILS_FROM_NAME=TwinSecure AI
       - ALERT_RECIPIENTS=["alerts@example.com"]
       - LOG_LEVEL=DEBUG
+      - CACHE_ENABLED=true
+      - CACHE_MAX_SIZE=1000
+      - CACHE_DEFAULT_TTL=60
+      - ENABLE_RATE_LIMITING=true
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_DEFAULT=100/minute
     ports:
       - "8000:8000"
     depends_on:
@@ -94,7 +100,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.new
+      dockerfile: Dockerfile
     container_name: twinsecure_frontend
     volumes:
       - ./frontend/src:/app/src

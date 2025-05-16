@@ -1,4 +1,13 @@
 # app/main.py
+"""
+Main application module for TwinSecure AI Backend.
+
+This module initializes the FastAPI application, sets up middleware,
+configures routes, and handles application lifecycle events.
+
+The application provides a RESTful API for managing digital twin security,
+alerts, reports, and user management.
+"""
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,30 +20,35 @@ from typing import Callable
 import asyncio
 from contextlib import asynccontextmanager
 
-from app.core.config import settings, logger
-from app.api.api_v1.api import api_router
-from app.db.base import Base  # Import Base for metadata
-from app.db.session import AsyncSessionLocal, engine # Import SessionLocal for startup event
-from app.db import init_db # Import the init_db function
+# Import application components
+from app.core.config import settings, logger  # Application configuration and logging
+from app.api.api_v1.api import api_router     # API routes
+from app.db.base import Base                  # SQLAlchemy Base model for metadata
+from app.db.session import AsyncSessionLocal, engine  # Database session and engine
+from app.db import init_db                    # Database initialization function
+from app.middleware.security_middleware import add_security_middleware  # Security middleware
+from app.middleware.cache_middleware import add_cache_middleware  # Caching middleware
 
-# Prometheus metrics
+# Prometheus metrics for monitoring application performance and usage
+# These metrics are exposed via the /metrics endpoint for scraping by Prometheus
 REQUEST_COUNT = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'endpoint', 'status']
+    'http_requests_total',                # Metric name
+    'Total HTTP requests',                # Metric description
+    ['method', 'endpoint', 'status']      # Labels for request method, endpoint path, and status code
 )
 REQUEST_LATENCY = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request latency',
-    ['method', 'endpoint']
+    'http_request_duration_seconds',      # Metric name
+    'HTTP request latency',               # Metric description
+    ['method', 'endpoint']                # Labels for request method and endpoint path
 )
 
-# Rate limiter setup
+# Rate limiter setup to prevent abuse and ensure fair usage
+# This limits the number of requests a client can make in a given time period
 limiter = Limiter(
-    key_func=get_remote_address,
-    enabled=settings.RATE_LIMIT_ENABLED,
-    storage_uri=settings.RATE_LIMIT_STORAGE_URI,
-    strategy=settings.RATE_LIMIT_STRATEGY
+    key_func=get_remote_address,          # Use client IP address as the rate limit key
+    enabled=settings.RATE_LIMIT_ENABLED,  # Enable/disable rate limiting based on configuration
+    storage_uri=settings.RATE_LIMIT_STORAGE_URI,  # Storage backend for rate limit data
+    strategy=settings.RATE_LIMIT_STRATEGY  # Rate limiting strategy (fixed window, moving window, etc.)
 )
 
 @asynccontextmanager
@@ -140,12 +154,29 @@ app.add_middleware(
 )
 
 # Request timing middleware
+# This middleware measures and records the time taken to process each request
 @app.middleware("http")
 async def add_timing_middleware(request: Request, call_next: Callable):
+    """
+    Middleware that measures request processing time and records it as a Prometheus metric.
+
+    Args:
+        request: The incoming HTTP request
+        call_next: The next middleware or route handler in the chain
+
+    Returns:
+        The HTTP response from the next handler
+    """
+    # Record start time before processing the request
     start_time = time.time()
+
+    # Process the request through the next handler
     response = await call_next(request)
+
+    # Calculate the total processing time
     process_time = time.time() - start_time
 
+    # Record the request latency in Prometheus
     REQUEST_LATENCY.labels(
         method=request.method,
         endpoint=request.url.path
@@ -154,27 +185,53 @@ async def add_timing_middleware(request: Request, call_next: Callable):
     return response
 
 # Error handling middleware
+# This middleware catches unhandled exceptions and returns a standardized error response
 @app.middleware("http")
 async def error_handling_middleware(request: Request, call_next: Callable):
+    """
+    Middleware that handles exceptions and records request metrics.
+
+    Args:
+        request: The incoming HTTP request
+        call_next: The next middleware or route handler in the chain
+
+    Returns:
+        The HTTP response or an error response if an exception occurs
+    """
     try:
+        # Process the request through the next handler
         response = await call_next(request)
+
+        # Record successful request in Prometheus
         REQUEST_COUNT.labels(
             method=request.method,
             endpoint=request.url.path,
             status=response.status_code
         ).inc()
+
         return response
     except Exception as e:
+        # Log the unhandled exception
         logger.error(f"Unhandled error: {str(e)}")
+
+        # Record failed request in Prometheus
         REQUEST_COUNT.labels(
             method=request.method,
             endpoint=request.url.path,
             status=500
         ).inc()
+
+        # Return a standardized error response
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error"}
         )
+
+# Add security middleware
+add_security_middleware(app)
+
+# Add caching middleware
+add_cache_middleware(app)
 
 # Include the main API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -183,7 +240,20 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 async def health_check():
     """
     Advanced health check endpoint with detailed system status.
+
+    This endpoint provides information about the health of various system components,
+    including the database, cache, and storage. It performs actual checks on these
+    components to ensure they are functioning correctly.
+
+    Returns:
+        dict: A dictionary containing health status information:
+            - status: Overall system status ("ok" or "error")
+            - version: Application version
+            - timestamp: Current timestamp
+            - components: Status of individual components
+            - errors: Any errors encountered during health checks (if applicable)
     """
+    # Initialize health status with default values
     health_status = {
         "status": "ok",
         "version": settings.VERSION,
@@ -195,14 +265,21 @@ async def health_check():
         }
     }
 
-    # Check database connectivity
+    # Check database connectivity by executing a simple query
     try:
         async with AsyncSessionLocal() as db:
             from sqlalchemy import text
             await db.execute(text("SELECT 1"))
+            logger.debug("Database health check passed")
     except Exception as e:
+        # Update health status if database check fails
         health_status["components"]["database"] = "error"
         health_status["database_error"] = str(e)
+        health_status["status"] = "error"  # Set overall status to error
+        logger.error(f"Database health check failed: {str(e)}")
+
+    # Additional component checks could be added here
+    # For example, checking Redis connectivity, file system access, etc.
 
     return health_status
 

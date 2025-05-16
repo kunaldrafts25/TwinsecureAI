@@ -21,6 +21,10 @@ class CacheSettings(BaseSettings):
     CACHE_TTL: int = 3600  # Default TTL in seconds
     CACHE_PREFIX: str = "twinsecure:"
     CACHE_ENABLED: bool = True
+    CACHE_MAX_SIZE: int = 1000  # Maximum number of items in the in-memory cache
+    CACHE_DEFAULT_TTL: int = 60  # Default TTL for in-memory cache in seconds
+    CACHE_EXCLUDE_PATHS: List[str] = ["/api/v1/auth/", "/api/v1/users/me", "/api/v1/health", "/metrics"]
+    CACHE_EXCLUDE_QUERY_PARAMS: List[str] = ["_", "timestamp", "nocache"]
 
 class SecuritySettings(BaseSettings):
     """Security-related settings"""
@@ -158,6 +162,10 @@ class Settings(BaseSettings):
     CACHE_TTL: int = 3600
     CACHE_PREFIX: str = "twinsecure:"
     CACHE_ENABLED: bool = True
+    CACHE_MAX_SIZE: int = 1000
+    CACHE_DEFAULT_TTL: int = 60
+    CACHE_EXCLUDE_PATHS: List[str] = ["/api/v1/auth/", "/api/v1/users/me", "/api/v1/health", "/metrics"]
+    CACHE_EXCLUDE_QUERY_PARAMS: List[str] = ["_", "timestamp", "nocache"]
 
     # Alerting Settings
     SLACK_WEBHOOK_URL: Optional[str] = None
