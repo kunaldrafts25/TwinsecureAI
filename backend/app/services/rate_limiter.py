@@ -1,12 +1,13 @@
 import time
-from typing import Dict, Optional
 from datetime import datetime, timedelta
+from typing import Dict, Optional
+
 
 class RateLimiter:
     def __init__(self, max_requests: int, time_window: int):
         """
         Initialize rate limiter.
-        
+
         Args:
             max_requests: Maximum number of requests allowed in the time window
             time_window: Time window in seconds
@@ -18,10 +19,10 @@ class RateLimiter:
     async def check_rate_limit(self, key: str) -> bool:
         """
         Check if a request should be rate limited.
-        
+
         Args:
             key: Unique identifier for the rate limit (e.g., 'send_alert', 'send_report')
-            
+
         Returns:
             bool: True if request is allowed, False if rate limited
         """
@@ -44,10 +45,10 @@ class RateLimiter:
     def get_remaining_requests(self, key: str) -> int:
         """
         Get the number of remaining requests in the current time window.
-        
+
         Args:
             key: Unique identifier for the rate limit
-            
+
         Returns:
             int: Number of remaining requests
         """
@@ -63,10 +64,10 @@ class RateLimiter:
     def get_reset_time(self, key: str) -> Optional[datetime]:
         """
         Get the time when the rate limit will reset.
-        
+
         Args:
             key: Unique identifier for the rate limit
-            
+
         Returns:
             Optional[datetime]: Time when rate limit resets, or None if no requests
         """
@@ -79,11 +80,11 @@ class RateLimiter:
     def reset(self, key: Optional[str] = None):
         """
         Reset rate limit for a specific key or all keys.
-        
+
         Args:
             key: Optional key to reset. If None, resets all keys.
         """
         if key:
             self.requests[key] = []
         else:
-            self.requests.clear() 
+            self.requests.clear()

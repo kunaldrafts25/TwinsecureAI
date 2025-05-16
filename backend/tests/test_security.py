@@ -2,14 +2,17 @@
 Security tests.
 These tests verify that security measures are properly implemented.
 """
-import pytest
-import time
-from fastapi.testclient import TestClient
-from typing import Dict, List
+
 import re
+import time
+from typing import Dict, List
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Import fixtures
-from tests.conftest import client, user_auth_headers, superuser_auth_headers
+from tests.conftest import client, superuser_auth_headers, user_auth_headers
+
 
 def test_cors_headers(client: TestClient):
     """Test that CORS headers are properly set."""
@@ -19,8 +22,8 @@ def test_cors_headers(client: TestClient):
         headers={
             "Origin": "http://localhost:3000",
             "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "Content-Type,Authorization"
-        }
+            "Access-Control-Request-Headers": "Content-Type,Authorization",
+        },
     )
 
     # Check that CORS headers are present
@@ -31,7 +34,11 @@ def test_cors_headers(client: TestClient):
 
     # Check that the allowed origin is present (could be * or the specific origin)
     # Our mock app returns the specific origin, which is also valid CORS behavior
-    assert response.headers["access-control-allow-origin"] in ["*", "http://localhost:3000"]
+    assert response.headers["access-control-allow-origin"] in [
+        "*",
+        "http://localhost:3000",
+    ]
+
 
 def test_authentication_required(client: TestClient):
     """Test that authentication is required for protected endpoints."""
@@ -41,7 +48,7 @@ def test_authentication_required(client: TestClient):
         "/api/v1/users/",
         "/api/v1/alerts/",
         "/api/v1/reports/",
-        "/api/v1/honeypot/"
+        "/api/v1/honeypot/",
     ]
 
     # Check that each endpoint requires authentication
@@ -50,18 +57,18 @@ def test_authentication_required(client: TestClient):
         assert response.status_code == 401
         assert response.json() == {"detail": "Not authenticated"}
 
+
 def test_authorization_required(client: TestClient, user_auth_headers: Dict[str, str]):
     """Test that authorization is required for superuser-only endpoints."""
     # List of endpoints that should require superuser authorization
-    superuser_endpoints = [
-        "/api/v1/users/"
-    ]
+    superuser_endpoints = ["/api/v1/users/"]
 
     # Check that each endpoint requires superuser authorization
     for endpoint in superuser_endpoints:
         response = client.get(endpoint, headers=user_auth_headers)
         assert response.status_code == 403
         assert response.json() == {"detail": "Not enough permissions"}
+
 
 def test_token_expiration(client: TestClient):
     """Test that tokens expire after the configured time."""
@@ -73,13 +80,14 @@ def test_token_expiration(client: TestClient):
     # 4. Verify that the request is rejected
     pass
 
+
 def test_brute_force_protection(client: TestClient):
     """Test protection against brute force attacks."""
     # Send multiple login requests with incorrect credentials
     for _ in range(10):
         response = client.post(
             "/api/v1/auth/login",
-            data={"username": "test@example.com", "password": "wrongpassword"}
+            data={"username": "test@example.com", "password": "wrongpassword"},
         )
         assert response.status_code == 401
 
@@ -87,11 +95,14 @@ def test_brute_force_protection(client: TestClient):
     # Here we're just testing that the endpoint still works after multiple failed attempts
     response = client.post(
         "/api/v1/auth/login",
-        data={"username": "test@example.com", "password": "wrongpassword"}
+        data={"username": "test@example.com", "password": "wrongpassword"},
     )
     assert response.status_code == 401
 
-def test_sql_injection_protection(client: TestClient, user_auth_headers: Dict[str, str]):
+
+def test_sql_injection_protection(
+    client: TestClient, user_auth_headers: Dict[str, str]
+):
     """Test protection against SQL injection attacks."""
     # List of SQL injection payloads to test
     sql_injection_payloads = [
@@ -99,14 +110,13 @@ def test_sql_injection_protection(client: TestClient, user_auth_headers: Dict[st
         "'; DROP TABLE users; --",
         "' UNION SELECT * FROM users; --",
         "' OR '1'='1' --",
-        "admin' --"
+        "admin' --",
     ]
 
     # Test login endpoint
     for payload in sql_injection_payloads:
         response = client.post(
-            "/api/v1/auth/login",
-            data={"username": payload, "password": payload}
+            "/api/v1/auth/login", data={"username": payload, "password": payload}
         )
         assert response.status_code == 401
 
@@ -120,9 +130,9 @@ def test_sql_injection_protection(client: TestClient, user_auth_headers: Dict[st
                 "severity": "HIGH",
                 "status": "NEW",
                 "title": payload,
-                "description": payload
+                "description": payload,
             },
-            headers=user_auth_headers
+            headers=user_auth_headers,
         )
         # The request should either succeed (if the payload is accepted as a string)
         # or fail with a validation error (if the payload is rejected)
@@ -134,6 +144,7 @@ def test_sql_injection_protection(client: TestClient, user_auth_headers: Dict[st
             assert data["title"] == payload
             assert data["description"] == payload
 
+
 def test_xss_protection(client: TestClient, user_auth_headers: Dict[str, str]):
     """Test protection against Cross-Site Scripting (XSS) attacks."""
     # List of XSS payloads to test
@@ -142,7 +153,7 @@ def test_xss_protection(client: TestClient, user_auth_headers: Dict[str, str]):
         "<img src='x' onerror='alert(\"XSS\")'>",
         "<a href='javascript:alert(\"XSS\")'>Click me</a>",
         "javascript:alert('XSS')",
-        "<svg/onload=alert('XSS')>"
+        "<svg/onload=alert('XSS')>",
     ]
 
     # Test alert creation with XSS payloads
@@ -155,9 +166,9 @@ def test_xss_protection(client: TestClient, user_auth_headers: Dict[str, str]):
                 "severity": "HIGH",
                 "status": "NEW",
                 "title": payload,
-                "description": payload
+                "description": payload,
             },
-            headers=user_auth_headers
+            headers=user_auth_headers,
         )
         # The request should either succeed (if the payload is accepted as a string)
         # or fail with a validation error (if the payload is rejected)

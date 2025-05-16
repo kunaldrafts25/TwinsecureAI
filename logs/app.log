@@ -2294,3 +2294,136 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-17 04:29:38,199 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
 2025-05-17 04:29:38,199 - tests.check_postgres - INFO - Tests will use SQLite instead
 2025-05-17 04:29:39,469 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:06:28,767 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:06:28,767 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:06:29,078 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:06:29,682 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:06:30,220 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:06:30,356 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:06:30,357 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:11:22,027 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:11:22,027 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:11:22,205 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:11:22,522 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:11:22,743 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:11:22,797 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:11:22,807 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:11:31,228 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:11:31,228 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:11:31,417 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:11:31,737 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:11:32,024 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:11:32,091 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:11:32,091 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:11:40,909 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:11:40,911 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:11:41,306 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:11:41,722 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:11:42,049 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:11:42,125 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:11:42,125 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:11:50,759 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:11:50,759 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:11:51,125 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:11:51,586 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:11:52,022 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:11:52,110 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:11:52,110 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:12:35,018 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:12:35,018 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:12:35,217 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:12:35,593 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:12:35,921 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:12:35,992 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:12:35,992 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:12:46,611 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:12:46,613 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:12:46,979 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:12:47,300 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:12:47,729 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:12:47,797 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:12:47,797 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:12:57,569 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:12:57,569 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:12:57,805 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:12:58,222 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:12:58,494 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:12:58,551 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:12:58,551 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:13:10,724 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:13:10,725 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:13:11,281 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:13:11,956 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:13:12,612 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:13:12,735 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:13:12,735 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:13:23,455 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:13:23,455 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:13:23,699 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:13:24,025 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:13:24,370 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:13:24,486 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:13:24,487 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:13:32,048 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:13:32,049 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:13:32,262 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:13:32,520 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:13:32,940 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:13:33,048 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:13:33,048 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:14:31,020 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:14:31,020 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:14:31,279 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:14:31,760 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:14:32,028 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:14:32,130 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:14:32,130 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:15:36,024 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:15:36,025 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:15:36,322 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:15:36,673 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:15:36,964 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:15:37,049 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:15:37,049 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:15:43,256 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:15:43,257 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:15:43,574 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:15:43,971 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:15:44,243 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:15:44,285 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:15:44,285 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:15:52,177 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:15:52,178 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:15:52,553 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:15:52,996 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:15:53,407 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:15:53,512 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:15:53,512 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:16:00,994 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:16:00,994 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:16:01,397 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:16:01,681 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:16:01,993 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:16:02,098 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:16:02,098 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:16:23,204 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:16:23,205 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:16:23,506 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:16:23,791 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:16:24,098 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:16:24,195 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:16:24,195 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:16:35,635 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:16:35,635 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:16:35,859 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:16:36,157 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:16:36,561 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:16:36,658 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:16:36,659 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:16:48,840 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:16:48,841 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:16:49,184 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:16:49,486 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:16:49,759 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:16:49,822 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:16:49,832 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']

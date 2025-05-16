@@ -2,22 +2,25 @@
 PostgreSQL database utilities for testing.
 This module provides utilities for setting up and tearing down PostgreSQL test databases.
 """
-import os
+
 import asyncio
+import os
+from typing import Any, AsyncGenerator, Dict, Generator, List
+from uuid import UUID, uuid4
+
 import pytest
-from typing import AsyncGenerator, Generator, Dict, Any, List
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from uuid import uuid4, UUID
+
+from app.core.config import settings
+from app.core.enums import AlertSeverity, AlertStatus, AlertType, UserRole
+from app.core.password import get_password_hash
 
 # Import app modules
 from app.db.base import Base
-from app.db.models.user import User
 from app.db.models.alert import Alert
-from app.core.enums import UserRole, AlertSeverity, AlertStatus, AlertType
-from app.core.password import get_password_hash
-from app.core.config import settings
+from app.db.models.user import User
 
 # Test database URL - use PostgreSQL for testing
 # This can be overridden by environment variables
@@ -46,6 +49,7 @@ TestingSessionLocal = sessionmaker(
     autoflush=False,
 )
 
+
 async def init_test_db() -> None:
     """
     Initialize the test database by creating all tables.
@@ -53,6 +57,7 @@ async def init_test_db() -> None:
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+
 
 async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -64,12 +69,13 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+
 async def create_test_user(
     db: AsyncSession,
     email: str = "test@example.com",
     password: str = "password",
     is_superuser: bool = False,
-    role: UserRole = UserRole.VIEWER
+    role: UserRole = UserRole.VIEWER,
 ) -> User:
     """
     Create a test user in the database.
@@ -81,12 +87,13 @@ async def create_test_user(
         full_name=f"Test User {email}",
         is_active=True,
         is_superuser=is_superuser,
-        role=role
+        role=role,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return user
+
 
 async def create_test_alert(
     db: AsyncSession,
@@ -95,7 +102,7 @@ async def create_test_alert(
     severity: AlertSeverity = AlertSeverity.MEDIUM,
     status: AlertStatus = AlertStatus.NEW,
     source_ip: str = "192.168.1.100",
-    assigned_to_id = None
+    assigned_to_id=None,
 ) -> Alert:
     """
     Create a test alert in the database.
@@ -107,12 +114,13 @@ async def create_test_alert(
         status=status,
         source_ip=source_ip,
         description="Test alert description",
-        assigned_to_id=assigned_to_id
+        assigned_to_id=assigned_to_id,
     )
     db.add(alert)
     await db.commit()
     await db.refresh(alert)
     return alert
+
 
 def get_test_settings() -> Dict[str, Any]:
     """
@@ -129,6 +137,7 @@ def get_test_settings() -> Dict[str, Any]:
         "SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES": 30,
         "DATABASE_URL": TEST_DATABASE_URL,
     }
+
 
 def cleanup_test_db() -> None:
     """

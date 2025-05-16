@@ -1,25 +1,44 @@
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import Column, String, Boolean, DateTime, func, Enum, JSON, ForeignKey, Text, Integer, Index, ForeignKeyConstraint
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from app.db.types import JSONB
-from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
-from app.db.base import Base
-from app.core.password import get_password_hash
+from sqlalchemy.orm import relationship, validates
+
 from app.core.enums import UserRole, UserStatus
+from app.core.password import get_password_hash
+from app.db.base import Base
+from app.db.types import JSONB
+
 
 class User(Base):
     """
     Enhanced database model for users with advanced features.
     """
+
     __tablename__ = "users"
     __table_args__ = (
         # Add indexes for common queries
         # Create a composite unique index on email and role
-        Index('ix_users_email_role', 'email', 'role', unique=True),
-        {'postgresql_partition_by': 'LIST (role)'}  # Partition by role for better performance
+        Index("ix_users_email_role", "email", "role", unique=True),
+        {
+            "postgresql_partition_by": "LIST (role)"
+        },  # Partition by role for better performance
     )
 
     # Primary key and basic info
@@ -32,7 +51,9 @@ class User(Base):
 
     # Enhanced user attributes
     # role is part of the primary key because it's used for partitioning
-    role = Column(Enum(UserRole), primary_key=True, nullable=False, default=UserRole.VIEWER)
+    role = Column(
+        Enum(UserRole), primary_key=True, nullable=False, default=UserRole.VIEWER
+    )
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.PENDING)
     department = Column(String, nullable=True)
     title = Column(String, nullable=True)
@@ -49,11 +70,9 @@ class User(Base):
 
     # Preferences and settings
     preferences = Column(JSONB, default={})
-    notification_settings = Column(JSONB, default={
-        "email": True,
-        "slack": False,
-        "discord": False
-    })
+    notification_settings = Column(
+        JSONB, default={"email": True, "slack": False, "discord": False}
+    )
 
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -63,20 +82,32 @@ class User(Base):
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
-    reports = relationship("Report", back_populates="creator", cascade="all, delete-orphan")
-    alerts = relationship("Alert", back_populates="assigned_to", foreign_keys="[Alert.assigned_to_id]", cascade="all, delete-orphan", overlaps="assigned_alerts")
-    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
-    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+    reports = relationship(
+        "Report", back_populates="creator", cascade="all, delete-orphan"
+    )
+    alerts = relationship(
+        "Alert",
+        back_populates="assigned_to",
+        foreign_keys="[Alert.assigned_to_id]",
+        cascade="all, delete-orphan",
+        overlaps="assigned_alerts",
+    )
+    audit_logs = relationship(
+        "AuditLog", back_populates="user", cascade="all, delete-orphan"
+    )
+    api_keys = relationship(
+        "APIKey", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # Validators
-    @validates('email')
+    @validates("email")
     def validate_email(self, key, email):
         """Validate email format"""
-        if not email or '@' not in email:
+        if not email or "@" not in email:
             raise ValueError("Invalid email format")
         return email.lower()
 
-    @validates('role')
+    @validates("role")
     def validate_role(self, key, role):
         """Validate role assignment"""
         if self.is_superuser and role != UserRole.ADMIN:
@@ -122,28 +153,30 @@ class User(Base):
         """Check if user has specific permission"""
         if self.is_superuser:
             return True
-        return permission in self.preferences.get('permissions', [])
+        return permission in self.preferences.get("permissions", [])
 
     def to_dict(self) -> dict:
         """Convert user object to dictionary"""
         return {
-            'id': str(self.id),
-            'email': self.email,
-            'full_name': self.full_name,
-            'role': self.role.value,
-            'status': self.status.value,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'last_login': self.last_login.isoformat() if self.last_login else None
+            "id": str(self.id),
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role.value,
+            "status": self.status.value,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_login": self.last_login.isoformat() if self.last_login else None,
         }
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role={self.role.value})>"
 
+
 class APIKey(Base):
     """
     Model for API keys associated with users.
     """
+
     __tablename__ = "api_keys"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -170,10 +203,12 @@ class APIKey(Base):
     def __repr__(self):
         return f"<APIKey(id={self.id}, user_id={self.user_id}, name='{self.name}')>"
 
+
 class AuditLog(Base):
     """
     Model for user activity audit logging.
     """
+
     __tablename__ = "audit_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -199,4 +234,6 @@ class AuditLog(Base):
     user = relationship("User", back_populates="audit_logs")
 
     def __repr__(self):
-        return f"<AuditLog(id={self.id}, user_id={self.user_id}, action='{self.action}')>"
+        return (
+            f"<AuditLog(id={self.id}, user_id={self.user_id}, action='{self.action}')>"
+        )

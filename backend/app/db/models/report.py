@@ -1,16 +1,32 @@
+import enum
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
-from sqlalchemy import Column, String, DateTime, JSON, func, ForeignKey, Enum, Boolean, Text, Integer, Index
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from app.db.types import JSONB, ARRAY
-from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
-import enum
+from sqlalchemy.orm import relationship, validates
+
 from app.db.base import Base
+from app.db.types import ARRAY, JSONB
+
 
 class ReportType(str, enum.Enum):
     """Report type enumeration"""
+
     DAILY_SUMMARY = "daily_summary"
     WEEKLY_SUMMARY = "weekly_summary"
     MONTHLY_SUMMARY = "monthly_summary"
@@ -21,8 +37,10 @@ class ReportType(str, enum.Enum):
     COMPLIANCE_REPORT = "compliance_report"
     CUSTOM = "custom"
 
+
 class ReportFormat(str, enum.Enum):
     """Report format enumeration"""
+
     PDF = "pdf"
     HTML = "html"
     JSON = "json"
@@ -30,24 +48,28 @@ class ReportFormat(str, enum.Enum):
     EXCEL = "excel"
     MARKDOWN = "markdown"
 
+
 class ReportStatus(str, enum.Enum):
     """Report status enumeration"""
+
     PENDING = "pending"
     GENERATING = "generating"
     COMPLETED = "completed"
     FAILED = "failed"
     ARCHIVED = "archived"
 
+
 class Report(Base):
     """
     Enhanced database model for generated reports with advanced features.
     """
+
     __tablename__ = "reports"
     __table_args__ = (
         # Add indexes for common queries
-        Index('ix_reports_type_created_at', 'report_type', 'created_at'),
-        Index('ix_reports_status_created_at', 'status', 'created_at'),
-        Index('ix_reports_creator_created_at', 'creator_id', 'created_at'),
+        Index("ix_reports_type_created_at", "report_type", "created_at"),
+        Index("ix_reports_status_created_at", "status", "created_at"),
+        Index("ix_reports_creator_created_at", "creator_id", "created_at"),
     )
 
     # Primary key and basic info
@@ -97,7 +119,9 @@ class Report(Base):
     related_reports = Column(ARRAY(UUID), nullable=True)  # Related report IDs
 
     # Timestamps
-    generated_at = Column(DateTime(timezone=True), index=True, nullable=False, server_default=func.now())
+    generated_at = Column(
+        DateTime(timezone=True), index=True, nullable=False, server_default=func.now()
+    )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     archived_at = Column(DateTime(timezone=True), nullable=True)
@@ -107,14 +131,14 @@ class Report(Base):
     change_history = Column(JSONB, default=[])
 
     # Validators
-    @validates('report_type')
+    @validates("report_type")
     def validate_report_type(self, key, report_type):
         """Validate report type"""
         if report_type not in ReportType:
             raise ValueError(f"Invalid report type: {report_type}")
         return report_type
 
-    @validates('file_format')
+    @validates("file_format")
     def validate_file_format(self, key, file_format):
         """Validate file format"""
         if file_format not in ReportFormat:
@@ -144,29 +168,23 @@ class Report(Base):
         """Update report status"""
         self.status = status
         if error:
-            self.add_to_change_history({
-                'status': status.value,
-                'error': error
-            })
+            self.add_to_change_history({"status": status.value, "error": error})
         else:
-            self.add_to_change_history({
-                'status': status.value
-            })
+            self.add_to_change_history({"status": status.value})
 
     def archive(self) -> None:
         """Archive the report"""
         self.status = ReportStatus.ARCHIVED
         self.archived_at = datetime.now(timezone.utc)
-        self.add_to_change_history({
-            'action': 'archive',
-            'archived_at': self.archived_at.isoformat()
-        })
+        self.add_to_change_history(
+            {"action": "archive", "archived_at": self.archived_at.isoformat()}
+        )
 
     def add_to_change_history(self, change: Dict[str, Any]) -> None:
         """Add entry to change history"""
         if not self.change_history:
             self.change_history = []
-        change['timestamp'] = datetime.now(timezone.utc).isoformat()
+        change["timestamp"] = datetime.now(timezone.utc).isoformat()
         self.change_history.append(change)
         self.version += 1
 
@@ -174,60 +192,70 @@ class Report(Base):
         """Schedule report generation"""
         self.is_scheduled = True
         self.schedule_cron = cron_expression
-        self.add_to_change_history({
-            'action': 'schedule',
-            'cron_expression': cron_expression
-        })
+        self.add_to_change_history(
+            {"action": "schedule", "cron_expression": cron_expression}
+        )
 
     def cancel_schedule(self) -> None:
         """Cancel scheduled generation"""
         self.is_scheduled = False
         self.schedule_cron = None
         self.next_run = None
-        self.add_to_change_history({
-            'action': 'cancel_schedule'
-        })
+        self.add_to_change_history({"action": "cancel_schedule"})
 
-    def update_access_control(self, is_public: bool, allowed_roles: List[str] = None, allowed_users: List[UUID] = None) -> None:
+    def update_access_control(
+        self,
+        is_public: bool,
+        allowed_roles: List[str] = None,
+        allowed_users: List[UUID] = None,
+    ) -> None:
         """Update report access control settings"""
         self.is_public = is_public
         self.allowed_roles = allowed_roles
         self.allowed_users = allowed_users
-        self.add_to_change_history({
-            'action': 'update_access_control',
-            'is_public': is_public,
-            'allowed_roles': allowed_roles,
-            'allowed_users': [str(uuid) for uuid in allowed_users] if allowed_users else None
-        })
+        self.add_to_change_history(
+            {
+                "action": "update_access_control",
+                "is_public": is_public,
+                "allowed_roles": allowed_roles,
+                "allowed_users": (
+                    [str(uuid) for uuid in allowed_users] if allowed_users else None
+                ),
+            }
+        )
 
     def to_dict(self) -> dict:
         """Convert report to dictionary"""
         return {
-            'id': str(self.id),
-            'report_type': self.report_type.value,
-            'title': self.title,
-            'status': self.status.value,
-            'file_format': self.file_format.value,
-            'created_at': self.created_at.isoformat(),
-            'generated_at': self.generated_at.isoformat() if self.generated_at else None,
-            'creator_id': str(self.creator_id),
-            'is_scheduled': self.is_scheduled,
-            'is_public': self.is_public,
-            'version': self.version,
-            'file_size': self.file_size,
-            'tags': self.tags,
-            'retention_days': self.retention_days,
-            'is_expired': self.is_expired,
-            'needs_regeneration': self.needs_regeneration
+            "id": str(self.id),
+            "report_type": self.report_type.value,
+            "title": self.title,
+            "status": self.status.value,
+            "file_format": self.file_format.value,
+            "created_at": self.created_at.isoformat(),
+            "generated_at": (
+                self.generated_at.isoformat() if self.generated_at else None
+            ),
+            "creator_id": str(self.creator_id),
+            "is_scheduled": self.is_scheduled,
+            "is_public": self.is_public,
+            "version": self.version,
+            "file_size": self.file_size,
+            "tags": self.tags,
+            "retention_days": self.retention_days,
+            "is_expired": self.is_expired,
+            "needs_regeneration": self.needs_regeneration,
         }
 
     def __repr__(self):
         return f"<Report(id={self.id}, type='{self.report_type.value}', status='{self.status.value}')>"
 
+
 class ReportTemplate(Base):
     """
     Model for report templates.
     """
+
     __tablename__ = "report_templates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

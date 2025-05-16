@@ -1,5 +1,5 @@
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import MetaData
+from sqlalchemy.orm import declarative_base
 
 # SQLAlchemy recommends using a naming convention for constraints
 # See: [https://alembic.sqlalchemy.org/en/latest/naming.html](https://alembic.sqlalchemy.org/en/latest/naming.html)

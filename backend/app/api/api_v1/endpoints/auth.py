@@ -1,21 +1,23 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any
 
 from app.core import security
 from app.core.config import logger
-from app.core.dependencies import get_current_active_user # Import dependency
+from app.core.dependencies import get_current_active_user  # Import dependency
 from app.db import crud
 from app.db.session import get_db
 from app.schemas import Token, User
 
 router = APIRouter()
 
+
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     db: AsyncSession = Depends(get_db),
-    form_data: OAuth2PasswordRequestForm = Depends() # Use OAuth2 form data
+    form_data: OAuth2PasswordRequestForm = Depends(),  # Use OAuth2 form data
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests.
@@ -35,14 +37,16 @@ async def login_for_access_token(
         )
     elif not user.is_active:
         logger.warning(f"Authentication failed for inactive user: {form_data.username}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
 
     access_token = security.create_access_token(subject=user.id)
     logger.info(f"Login successful, token generated for user: {user.email}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/logout") # Placeholder for logout functionality
+@router.post("/logout")  # Placeholder for logout functionality
 async def logout():
     """
     Placeholder for logout. JWT is stateless, so true logout happens client-side
@@ -57,7 +61,7 @@ async def logout():
 
 @router.get("/me", response_model=User)
 async def read_users_me(
-    current_user: User = Depends(get_current_active_user), # Use dependency
+    current_user: User = Depends(get_current_active_user),  # Use dependency
 ) -> Any:
     """
     Get current logged-in user's details.

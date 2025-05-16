@@ -1,8 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import settings, logger
+
+from app.core.config import logger, settings
+from app.core.enums import UserRole
 from app.db import crud
 from app.schemas.user_schema import UserCreate
-from app.core.enums import UserRole
+
 
 async def init_db(db: AsyncSession) -> None:
     """
@@ -17,7 +19,7 @@ async def init_db(db: AsyncSession) -> None:
             password=settings.FIRST_SUPERUSER_PASSWORD.get_secret_value(),
             is_superuser=True,
             is_active=True,
-            role=UserRole.ADMIN  # Superuser must have ADMIN role
+            role=UserRole.ADMIN,  # Superuser must have ADMIN role
         )
         try:
             user = await crud.user.create(db=db, obj_in=user_in)
@@ -30,8 +32,8 @@ async def init_db(db: AsyncSession) -> None:
             # Re-fetch user to confirm if creation succeeded despite error log
             user = await crud.user.get_by_email(db, email=settings.FIRST_SUPERUSER)
             if user:
-                 logger.warning("Superuser already existed or was created concurrently.")
+                logger.warning("Superuser already existed or was created concurrently.")
             else:
-                 raise # Re-raise if creation truly failed
+                raise  # Re-raise if creation truly failed
     else:
         logger.info("Superuser already exists.")

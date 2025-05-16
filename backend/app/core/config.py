@@ -1,21 +1,24 @@
 # app/core/config.py
 
+import json
 import os
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-from typing import List, Union, Optional, Dict, Any
-from pydantic import AnyHttpUrl, EmailStr, field_validator, Field, SecretStr
 import secrets
 from functools import lru_cache
-import json
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from dotenv import load_dotenv
+from pydantic import AnyHttpUrl, EmailStr, Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings
 
 # Load environment variables from .env file (especially for local development)
 # In production (e.g., EKS), environment variables are typically injected directly.
 load_dotenv()
 
+
 class CacheSettings(BaseSettings):
     """Cache configuration settings"""
+
     REDIS_URL: Optional[str] = None
     REDIS_PASSWORD: Optional[SecretStr] = None
     CACHE_TTL: int = 3600  # Default TTL in seconds
@@ -23,18 +26,29 @@ class CacheSettings(BaseSettings):
     CACHE_ENABLED: bool = True
     CACHE_MAX_SIZE: int = 1000  # Maximum number of items in the in-memory cache
     CACHE_DEFAULT_TTL: int = 60  # Default TTL for in-memory cache in seconds
-    CACHE_EXCLUDE_PATHS: List[str] = ["/api/v1/auth/", "/api/v1/users/me", "/api/v1/health", "/metrics"]
+    CACHE_EXCLUDE_PATHS: List[str] = [
+        "/api/v1/auth/",
+        "/api/v1/users/me",
+        "/api/v1/health",
+        "/metrics",
+    ]
     CACHE_EXCLUDE_QUERY_PARAMS: List[str] = ["_", "timestamp", "nocache"]
+
 
 class SecuritySettings(BaseSettings):
     """Security-related settings"""
-    SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)))
+
+    SECRET_KEY: SecretStr = Field(
+        default_factory=lambda: SecretStr(secrets.token_urlsafe(32))
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     PASSWORD_MIN_LENGTH: int = 12
     PASSWORD_MAX_LENGTH: int = 128
-    PASSWORD_PATTERN: str = r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{12,}$"
+    PASSWORD_PATTERN: str = (
+        r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{12,}$"
+    )
     SESSION_COOKIE_NAME: str = "twinsecure_session"
     SESSION_COOKIE_SECURE: bool = True
     SESSION_COOKIE_HTTPONLY: bool = True
@@ -50,12 +64,18 @@ class SecuritySettings(BaseSettings):
     JWT_BLACKLIST_ENABLED: bool = True
     JWT_BLACKLIST_TOKEN_CHECKS: List[str] = ["access", "refresh"]
 
+
 class DatabaseSettings(BaseSettings):
     """Database configuration settings"""
-    POSTGRES_SERVER: str = "localhost"  # Changed from twinsecure_db to localhost for local development
+
+    POSTGRES_SERVER: str = (
+        "localhost"  # Changed from twinsecure_db to localhost for local development
+    )
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: SecretStr = Field(default_factory=lambda: SecretStr("kUNAL@#$12345"))
+    POSTGRES_PASSWORD: SecretStr = Field(
+        default_factory=lambda: SecretStr("kUNAL@#$12345")
+    )
     POSTGRES_DB: str = "TwinSecure"  # Ensure consistent capitalization
     DATABASE_URL: Optional[str] = None
     POOL_SIZE: int = 20
@@ -70,37 +90,45 @@ class DatabaseSettings(BaseSettings):
         if isinstance(v, str):
             return v
         values = info.data
-        password = values['POSTGRES_PASSWORD'].get_secret_value()
+        password = values["POSTGRES_PASSWORD"].get_secret_value()
         # URL encode special characters in password
-        password = password.replace('@', '%40').replace('#', '%23').replace('$', '%24')
-        db_name = values['POSTGRES_DB']  # Get the database name
+        password = password.replace("@", "%40").replace("#", "%23").replace("$", "%24")
+        db_name = values["POSTGRES_DB"]  # Get the database name
         print(f"Using database name: {db_name}")  # Debug print
         return (
             f"postgresql+asyncpg://{values['POSTGRES_USER']}:{password}"
             f"@{values['POSTGRES_SERVER']}:{values['POSTGRES_PORT']}/{db_name}"
         )
 
+
 class GeoIP2Settings(BaseSettings):
     """GeoIP2 configuration settings."""
+
     enabled: bool = True
     db_path: str = r"E:\ts\GeoLite2-City.mmdb"
-    license_key: Optional[str] = Field(None, description="MaxMind license key for GeoLite2 database")
+    license_key: Optional[str] = Field(
+        None, description="MaxMind license key for GeoLite2 database"
+    )
 
     class Config:
         env_prefix = "MAXMIND_"
         case_sensitive = True
         validate_by_name = True
 
+
 class Settings(BaseSettings):
     """
     Application configuration settings with advanced features.
     """
+
     # Basic Settings
     PROJECT_NAME: str = "TwinSecure AI Backend"
     PROJECT_DESCRIPTION: str = "Advanced Security and AI Platform"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    ENVIRONMENT: str = Field("development", pattern="^(development|staging|production)$")
+    ENVIRONMENT: str = Field(
+        "development", pattern="^(development|staging|production)$"
+    )
     LOG_LEVEL: str = Field("INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     DEBUG: bool = False
 
@@ -128,13 +156,17 @@ class Settings(BaseSettings):
     RATE_LIMIT_STRATEGY: str = "fixed-window"
 
     # Security Settings
-    SECURITY__SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)))
+    SECURITY__SECRET_KEY: SecretStr = Field(
+        default_factory=lambda: SecretStr(secrets.token_urlsafe(32))
+    )
     SECURITY__ALGORITHM: str = "HS256"
     SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     SECURITY__REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     SECURITY__PASSWORD_MIN_LENGTH: int = 12
     SECURITY__PASSWORD_MAX_LENGTH: int = 128
-    SECURITY__PASSWORD_PATTERN: str = r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{12,}$"
+    SECURITY__PASSWORD_PATTERN: str = (
+        r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{12,}$"
+    )
     SECURITY__SESSION_COOKIE_NAME: str = "twinsecure_session"
     SECURITY__SESSION_COOKIE_SECURE: bool = True
     SECURITY__SESSION_COOKIE_HTTPONLY: bool = True
@@ -149,10 +181,14 @@ class Settings(BaseSettings):
     SECURITY__JWT_BLACKLIST_TOKEN_CHECKS: List[str] = ["access", "refresh"]
 
     # Database Settings
-    POSTGRES_SERVER: str = "localhost"  # Changed from twinsecure_db to localhost for local development
+    POSTGRES_SERVER: str = (
+        "localhost"  # Changed from twinsecure_db to localhost for local development
+    )
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: SecretStr = Field(default_factory=lambda: SecretStr("kUNAL@#$12345"))
+    POSTGRES_PASSWORD: SecretStr = Field(
+        default_factory=lambda: SecretStr("kUNAL@#$12345")
+    )
     POSTGRES_DB: str = "TwinSecure"  # Ensure consistent capitalization
     DATABASE_URL: Optional[str] = None
 
@@ -164,7 +200,12 @@ class Settings(BaseSettings):
     CACHE_ENABLED: bool = True
     CACHE_MAX_SIZE: int = 1000
     CACHE_DEFAULT_TTL: int = 60
-    CACHE_EXCLUDE_PATHS: List[str] = ["/api/v1/auth/", "/api/v1/users/me", "/api/v1/health", "/metrics"]
+    CACHE_EXCLUDE_PATHS: List[str] = [
+        "/api/v1/auth/",
+        "/api/v1/users/me",
+        "/api/v1/health",
+        "/metrics",
+    ]
     CACHE_EXCLUDE_QUERY_PARAMS: List[str] = ["_", "timestamp", "nocache"]
 
     # Alerting Settings
@@ -205,7 +246,9 @@ class Settings(BaseSettings):
 
     # First Superuser
     FIRST_SUPERUSER: EmailStr = Field(default="admin@example.com")
-    FIRST_SUPERUSER_PASSWORD: SecretStr = Field(default_factory=lambda: SecretStr("admin123"))
+    FIRST_SUPERUSER_PASSWORD: SecretStr = Field(
+        default_factory=lambda: SecretStr("admin123")
+    )
 
     # CORS Settings
     BACKEND_CORS_ORIGINS: List[str] = []
@@ -221,9 +264,9 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v
         values = info.data
-        password = values['POSTGRES_PASSWORD'].get_secret_value()
+        password = values["POSTGRES_PASSWORD"].get_secret_value()
         # URL encode special characters in password
-        password = password.replace('@', '%40').replace('#', '%23').replace('$', '%24')
+        password = password.replace("@", "%40").replace("#", "%23").replace("$", "%24")
         return (
             f"postgresql+asyncpg://{values['POSTGRES_USER']}:{password}"
             f"@{values['POSTGRES_SERVER']}:{values['POSTGRES_PORT']}/{values['POSTGRES_DB']}"
@@ -248,10 +291,12 @@ class Settings(BaseSettings):
             return ["http://localhost:3000"]  # Default for development
         return self.BACKEND_CORS_ORIGINS
 
+
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance"""
     return Settings()
+
 
 # Initialize settings
 settings = get_settings()
@@ -261,6 +306,7 @@ import logging
 import logging.handlers
 from pathlib import Path
 
+
 def setup_logging():
     """Configure advanced logging with rotation and formatting"""
     log_dir = Path("logs")
@@ -268,17 +314,13 @@ def setup_logging():
 
     # Create formatters
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    console_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s'
-    )
+    console_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # Create handlers
     file_handler = logging.handlers.RotatingFileHandler(
-        log_dir / "app.log",
-        maxBytes=10_000_000,  # 10MB
-        backupCount=5
+        log_dir / "app.log", maxBytes=10_000_000, backupCount=5  # 10MB
     )
     file_handler.setFormatter(file_formatter)
 
@@ -295,37 +337,47 @@ def setup_logging():
     logger = logging.getLogger(__name__)
     return logger
 
+
 logger = setup_logging()
+
 
 # AWS Secrets Manager integration
 def load_secrets_from_aws() -> None:
     """Load secrets from AWS Secrets Manager with error handling and retries"""
-    if settings.ENVIRONMENT != "development" and settings.AWS_SECRETS_MANAGER_SECRET_NAME:
+    if (
+        settings.ENVIRONMENT != "development"
+        and settings.AWS_SECRETS_MANAGER_SECRET_NAME
+    ):
         try:
+            import backoff
             import boto3
             from botocore.exceptions import ClientError
-            import backoff
 
-            @backoff.on_exception(
-                backoff.expo,
-                ClientError,
-                max_tries=3
-            )
+            @backoff.on_exception(backoff.expo, ClientError, max_tries=3)
             def get_secret():
                 session = boto3.session.Session(
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID.get_secret_value() if settings.AWS_ACCESS_KEY_ID else None,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY.get_secret_value() if settings.AWS_SECRET_ACCESS_KEY else None,
-                    region_name=settings.AWS_REGION
+                    aws_access_key_id=(
+                        settings.AWS_ACCESS_KEY_ID.get_secret_value()
+                        if settings.AWS_ACCESS_KEY_ID
+                        else None
+                    ),
+                    aws_secret_access_key=(
+                        settings.AWS_SECRET_ACCESS_KEY.get_secret_value()
+                        if settings.AWS_SECRET_ACCESS_KEY
+                        else None
+                    ),
+                    region_name=settings.AWS_REGION,
                 )
                 client = session.client(
-                    service_name='secretsmanager',
-                    region_name=settings.AWS_REGION
+                    service_name="secretsmanager", region_name=settings.AWS_REGION
                 )
-                return client.get_secret_value(SecretId=settings.AWS_SECRETS_MANAGER_SECRET_NAME)
+                return client.get_secret_value(
+                    SecretId=settings.AWS_SECRETS_MANAGER_SECRET_NAME
+                )
 
             response = get_secret()
-            if 'SecretString' in response:
-                secret = json.loads(response['SecretString'])
+            if "SecretString" in response:
+                secret = json.loads(response["SecretString"])
                 # Update settings with secrets
                 for key, value in secret.items():
                     if hasattr(settings, key):
@@ -339,7 +391,7 @@ def load_secrets_from_aws() -> None:
             logger.error(f"Error fetching secrets from AWS Secrets Manager: {e}")
             raise
 
+
 # Load secrets in non-dev environments
 if settings.ENVIRONMENT != "development":
     load_secrets_from_aws()
-

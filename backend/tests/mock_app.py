@@ -2,14 +2,16 @@
 Mock app for testing purposes.
 This file creates a simplified version of the main app for testing.
 """
-from fastapi import FastAPI, Depends, HTTPException, Request, Response, Header
+
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-from uuid import UUID, uuid4
-from enum import Enum
 
 # Create a simple FastAPI app for testing
 app = FastAPI(
@@ -30,6 +32,7 @@ app.add_middleware(
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
+
 # Mock database for testing
 class MockDB:
     users = {
@@ -40,7 +43,7 @@ class MockDB:
             "full_name": "Test User",
             "is_active": True,
             "is_superuser": False,
-            "role": "VIEWER"
+            "role": "VIEWER",
         },
         "admin@example.com": {
             "id": "550e8400-e29b-41d4-a716-446655440001",
@@ -49,8 +52,8 @@ class MockDB:
             "full_name": "Admin User",
             "is_active": True,
             "is_superuser": True,
-            "role": "ADMIN"
-        }
+            "role": "ADMIN",
+        },
     }
 
     alerts = [
@@ -62,7 +65,7 @@ class MockDB:
             "status": "NEW",
             "created_at": datetime.now().isoformat(),
             "title": "Suspicious Login Attempt",
-            "description": "Multiple failed login attempts detected"
+            "description": "Multiple failed login attempts detected",
         },
         {
             "id": "650e8400-e29b-41d4-a716-446655440001",
@@ -72,8 +75,8 @@ class MockDB:
             "status": "ACKNOWLEDGED",
             "created_at": datetime.now().isoformat(),
             "title": "Potential Malware Detected",
-            "description": "Suspicious file activity detected"
-        }
+            "description": "Suspicious file activity detected",
+        },
     ]
 
     reports = [
@@ -82,9 +85,10 @@ class MockDB:
             "title": "Monthly Security Report",
             "description": "Security overview for the month",
             "created_at": datetime.now().isoformat(),
-            "status": "COMPLETED"
+            "status": "COMPLETED",
         }
     ]
+
 
 # Mock authentication dependency
 async def get_current_user(authorization: Optional[str] = Header(None)):
@@ -95,7 +99,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         raise HTTPException(
             status_code=401,
             detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Check if the token starts with "Bearer "
@@ -103,7 +107,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         raise HTTPException(
             status_code=401,
             detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Extract the token
@@ -121,8 +125,9 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
     raise HTTPException(
         status_code=401,
         detail="Invalid authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"}
+        headers={"WWW-Authenticate": "Bearer"},
     )
+
 
 # Mock superuser dependency
 async def get_current_superuser(current_user: dict = Depends(get_current_user)):
@@ -136,6 +141,7 @@ async def get_current_superuser(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
+
 # Health check endpoints
 @app.get("/health", tags=["Health"])
 async def health_check():
@@ -144,6 +150,7 @@ async def health_check():
     """
     return {"status": "ok"}
 
+
 @app.get("/api/v1/system/health", tags=["Health"])
 async def system_health():
     """
@@ -151,12 +158,9 @@ async def system_health():
     """
     return {
         "status": "ok",
-        "components": {
-            "database": "ok",
-            "cache": "ok",
-            "storage": "ok"
-        }
+        "components": {"database": "ok", "cache": "ok", "storage": "ok"},
     }
+
 
 # Authentication endpoints
 @app.post("/api/v1/auth/login")
@@ -167,23 +171,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # Check if the user exists
     user = MockDB.users.get(form_data.username)
     if not user:
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Invalid credentials"}
-        )
+        return JSONResponse(status_code=401, content={"detail": "Invalid credentials"})
 
     # Check if the password is correct (in a real app, you would verify the hash)
-    if form_data.password != "password":  # For testing, we accept "password" for all users
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Invalid credentials"}
-        )
+    if (
+        form_data.password != "password"
+    ):  # For testing, we accept "password" for all users
+        return JSONResponse(status_code=401, content={"detail": "Invalid credentials"})
 
     # Return a token
-    return {
-        "access_token": f"mock_token_{user['id']}",
-        "token_type": "bearer"
-    }
+    return {"access_token": f"mock_token_{user['id']}", "token_type": "bearer"}
+
 
 # User endpoints
 @app.get("/api/v1/users/me", tags=["Users"])
@@ -193,12 +191,14 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
     """
     return current_user
 
+
 @app.get("/api/v1/users/", tags=["Users"])
 async def get_users(current_user: dict = Depends(get_current_superuser)):
     """
     Get all users (superuser only).
     """
     return list(MockDB.users.values())
+
 
 # Alert endpoints
 @app.get("/api/v1/alerts/", tags=["Alerts"])
@@ -207,6 +207,7 @@ async def get_alerts(current_user: dict = Depends(get_current_user)):
     Get all alerts.
     """
     return MockDB.alerts
+
 
 @app.get("/api/v1/alerts/{alert_id}", tags=["Alerts"])
 async def get_alert(alert_id: str, current_user: dict = Depends(get_current_user)):
@@ -219,18 +220,16 @@ async def get_alert(alert_id: str, current_user: dict = Depends(get_current_user
 
     raise HTTPException(status_code=404, detail="Alert not found")
 
+
 @app.post("/api/v1/alerts/", tags=["Alerts"])
 async def create_alert(alert: dict, current_user: dict = Depends(get_current_user)):
     """
     Create a new alert.
     """
-    new_alert = {
-        "id": str(uuid4()),
-        "created_at": datetime.now().isoformat(),
-        **alert
-    }
+    new_alert = {"id": str(uuid4()), "created_at": datetime.now().isoformat(), **alert}
     MockDB.alerts.append(new_alert)
     return new_alert
+
 
 # Report endpoints
 @app.get("/api/v1/reports/", tags=["Reports"])
@@ -239,6 +238,7 @@ async def get_reports(current_user: dict = Depends(get_current_user)):
     Get all reports.
     """
     return MockDB.reports
+
 
 # Honeypot endpoints
 @app.get("/api/v1/honeypot/", tags=["Honeypot"])
@@ -254,10 +254,7 @@ async def get_honeypot(current_user: dict = Depends(get_current_user)):
                 "timestamp": datetime.now().isoformat(),
                 "source_ip": "203.0.113.1",
                 "event_type": "SSH_BRUTE_FORCE",
-                "details": {
-                    "attempts": 23,
-                    "usernames": ["root", "admin", "user"]
-                }
+                "details": {"attempts": 23, "usernames": ["root", "admin", "user"]},
             }
-        ]
+        ],
     }

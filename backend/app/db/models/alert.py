@@ -1,17 +1,35 @@
+import enum
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
-from sqlalchemy import Column, String, Integer, DateTime, JSON, func, Index, ForeignKey, ForeignKeyConstraint, Enum, Boolean, Text, Float
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from app.db.types import JSONB, INET, ARRAY
-from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
-import enum
+from sqlalchemy.orm import relationship, validates
+
+from app.core.enums import AlertSeverity, AlertStatus, AlertType, UserRole
 from app.db.base import Base
-from app.core.enums import UserRole, AlertType, AlertSeverity, AlertStatus
+from app.db.types import ARRAY, INET, JSONB
+
 
 class AlertSource(str, enum.Enum):
     """Alert source enumeration"""
+
     HONEYPOT = "honeypot"
     IDS = "ids"
     WAF = "waf"
@@ -20,20 +38,22 @@ class AlertSource(str, enum.Enum):
     MANUAL = "manual"
     EXTERNAL = "external"
 
+
 class Alert(Base):
     """
     Enhanced database model for security alerts with advanced features.
     """
+
     __tablename__ = "alerts"
     __table_args__ = (
         # Add indexes for common queries
-        Index('ix_alerts_triggered_at_severity', 'triggered_at', 'severity'),
-        Index('ix_alerts_source_ip_triggered_at', 'source_ip', 'triggered_at'),
-        Index('ix_alerts_status_created_at', 'status', 'created_at'),
-        Index('ix_alerts_type_severity', 'alert_type', 'severity'),
+        Index("ix_alerts_triggered_at_severity", "triggered_at", "severity"),
+        Index("ix_alerts_source_ip_triggered_at", "source_ip", "triggered_at"),
+        Index("ix_alerts_status_created_at", "status", "created_at"),
+        Index("ix_alerts_type_severity", "alert_type", "severity"),
         # Add GIN index for JSON fields
-        Index('ix_alerts_payload_gin', 'payload', postgresql_using='gin'),
-        Index('ix_alerts_enrichment_gin', 'enrichment_data', postgresql_using='gin'),
+        Index("ix_alerts_payload_gin", "payload", postgresql_using="gin"),
+        Index("ix_alerts_enrichment_gin", "enrichment_data", postgresql_using="gin"),
     )
 
     # Primary key and basic info
@@ -77,13 +97,17 @@ class Alert(Base):
 
     # Tracking and workflow
     assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    acknowledged_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    acknowledged_by_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     resolved_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     related_alerts = Column(ARRAY(UUID), nullable=True)
     tags = Column(ARRAY(String), nullable=True)
 
     # Timestamps
-    triggered_at = Column(DateTime(timezone=True), index=True, nullable=True, server_default=func.now())
+    triggered_at = Column(
+        DateTime(timezone=True), index=True, nullable=True, server_default=func.now()
+    )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     acknowledged_at = Column(DateTime(timezone=True), nullable=True)
@@ -91,20 +115,31 @@ class Alert(Base):
     last_updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    assigned_to = relationship("User", foreign_keys=[assigned_to_id], backref="assigned_alerts", overlaps="alerts")
-    acknowledged_by = relationship("User", foreign_keys=[acknowledged_by_id], backref="acknowledged_alerts")
-    resolved_by = relationship("User", foreign_keys=[resolved_by_id], backref="resolved_alerts")
-    notes = relationship("AlertNote", back_populates="alert", cascade="all, delete-orphan")
+    assigned_to = relationship(
+        "User",
+        foreign_keys=[assigned_to_id],
+        backref="assigned_alerts",
+        overlaps="alerts",
+    )
+    acknowledged_by = relationship(
+        "User", foreign_keys=[acknowledged_by_id], backref="acknowledged_alerts"
+    )
+    resolved_by = relationship(
+        "User", foreign_keys=[resolved_by_id], backref="resolved_alerts"
+    )
+    notes = relationship(
+        "AlertNote", back_populates="alert", cascade="all, delete-orphan"
+    )
 
     # Validators
-    @validates('severity')
+    @validates("severity")
     def validate_severity(self, key, severity):
         """Validate severity level"""
         if severity not in AlertSeverity:
             raise ValueError(f"Invalid severity level: {severity}")
         return severity
 
-    @validates('status')
+    @validates("status")
     def validate_status(self, key, status):
         """Validate status transitions"""
         if status not in AlertStatus:
@@ -144,10 +179,9 @@ class Alert(Base):
         self.status = AlertStatus.RESOLVED
         self.resolved_by_id = user_id
         self.resolved_at = datetime.now(timezone.utc)
-        self.notes.append(AlertNote(
-            user_id=user_id,
-            content=f"Alert resolved: {resolution}"
-        ))
+        self.notes.append(
+            AlertNote(user_id=user_id, content=f"Alert resolved: {resolution}")
+        )
 
     def escalate(self, user_id: UUID, reason: str) -> None:
         """Escalate the alert"""
@@ -161,10 +195,7 @@ class Alert(Base):
 
     def add_note(self, user_id: UUID, content: str) -> None:
         """Add a note to the alert"""
-        self.notes.append(AlertNote(
-            user_id=user_id,
-            content=content
-        ))
+        self.notes.append(AlertNote(user_id=user_id, content=content))
 
     def update_enrichment(self, data: Dict[str, Any]) -> None:
         """Update enrichment data"""
@@ -180,7 +211,7 @@ class Alert(Base):
             AlertSeverity.LOW: 30,
             AlertSeverity.MEDIUM: 50,
             AlertSeverity.HIGH: 70,
-            AlertSeverity.CRITICAL: 90
+            AlertSeverity.CRITICAL: 90,
         }.get(self.severity, 50)
 
         # Adjust score based on enrichment data
@@ -188,38 +219,40 @@ class Alert(Base):
             base_score += (self.abuse_score / 100) * 20
 
         if self.confidence_score:
-            base_score *= (self.confidence_score / 100)
+            base_score *= self.confidence_score / 100
 
         self.risk_score = min(100, max(0, int(base_score)))
 
     def to_dict(self) -> dict:
         """Convert alert to dictionary"""
         return {
-            'id': str(self.id),
-            'alert_type': self.alert_type.value,
-            'source': self.source.value,
-            'severity': self.severity.value,
-            'status': self.status.value,
-            'title': self.title,
-            'description': self.description,
-            'source_ip': str(self.source_ip) if self.source_ip else None,
-            'target_ip': str(self.target_ip) if self.target_ip else None,
-            'triggered_at': self.triggered_at.isoformat(),
-            'age': self.age,
-            'risk_score': self.risk_score,
-            'confidence_score': self.confidence_score,
-            'assigned_to': str(self.assigned_to_id) if self.assigned_to_id else None,
-            'tags': self.tags,
-            'enrichment_data': self.enrichment_data
+            "id": str(self.id),
+            "alert_type": self.alert_type.value,
+            "source": self.source.value,
+            "severity": self.severity.value,
+            "status": self.status.value,
+            "title": self.title,
+            "description": self.description,
+            "source_ip": str(self.source_ip) if self.source_ip else None,
+            "target_ip": str(self.target_ip) if self.target_ip else None,
+            "triggered_at": self.triggered_at.isoformat(),
+            "age": self.age,
+            "risk_score": self.risk_score,
+            "confidence_score": self.confidence_score,
+            "assigned_to": str(self.assigned_to_id) if self.assigned_to_id else None,
+            "tags": self.tags,
+            "enrichment_data": self.enrichment_data,
         }
 
     def __repr__(self):
         return f"<Alert(id={self.id}, type='{self.alert_type.value}', severity='{self.severity.value}')>"
 
+
 class AlertNote(Base):
     """
     Model for alert notes and comments.
     """
+
     __tablename__ = "alert_notes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -227,7 +260,9 @@ class AlertNote(Base):
     user_id = Column(UUID(as_uuid=True), nullable=True)
     user_role = Column(Enum(UserRole), nullable=True)
     content = Column(Text, nullable=False)
-    is_internal = Column(Boolean, default=False)  # Internal notes not visible to external users
+    is_internal = Column(
+        Boolean, default=False
+    )  # Internal notes not visible to external users
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

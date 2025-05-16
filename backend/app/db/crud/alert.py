@@ -1,11 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.sql import text
-from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import text
 
 from app.db.models import Alert
-from app.schemas import AlertSeverity, AlertStatus, AlertQueryFilters
+from app.schemas import AlertQueryFilters, AlertSeverity, AlertStatus
+
 
 async def get_count_by_severity(db: AsyncSession) -> Dict[AlertSeverity, int]:
     """
@@ -21,6 +23,7 @@ async def get_count_by_severity(db: AsyncSession) -> Dict[AlertSeverity, int]:
         "info": 7,
     }
 
+
 async def get_count_by_status(db: AsyncSession) -> Dict[AlertStatus, int]:
     """
     Get count of alerts by status.
@@ -34,6 +37,7 @@ async def get_count_by_status(db: AsyncSession) -> Dict[AlertStatus, int]:
         "resolved": 32,
         "false_positive": 6,
     }
+
 
 async def get_multi(
     db: AsyncSession,

@@ -1,12 +1,14 @@
-import requests
-import httpx
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
+import httpx
+import requests
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
 
 class SlackAlerter:
     """Class for sending alerts to Slack."""
@@ -45,34 +47,28 @@ class SlackAlerter:
                     "text": {
                         "type": "plain_text",
                         "text": f"{severity} Alert: {title}",
-                        "emoji": True
-                    }
+                        "emoji": True,
+                    },
                 },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": description
-                    }
-                }
+                {"type": "section", "text": {"type": "mrkdwn", "text": description}},
             ]
 
             # Add alert ID if available
             if "id" in alert_data:
-                blocks.append({
-                    "type": "context",
-                    "elements": [
-                        {
-                            "type": "mrkdwn",
-                            "text": f"*Alert ID:* {alert_data['id']}"
-                        }
-                    ]
-                })
+                blocks.append(
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "mrkdwn",
+                                "text": f"*Alert ID:* {alert_data['id']}",
+                            }
+                        ],
+                    }
+                )
 
             # Create payload
-            payload = {
-                "blocks": blocks
-            }
+            payload = {"blocks": blocks}
 
             # Add channel if specified
             if self.channel:
@@ -102,9 +98,7 @@ def send_slack_message(message: str, webhook_url: str) -> Optional[requests.Resp
         None otherwise.
     """
     # Prepare the payload for the Slack message
-    payload = {
-        "text": message
-    }
+    payload = {"text": message}
 
     try:
         # Send the HTTP POST request to the Slack webhook URL
@@ -113,7 +107,9 @@ def send_slack_message(message: str, webhook_url: str) -> Optional[requests.Resp
         # Raise an exception for bad status codes (4xx or 5xx)
         response.raise_for_status()
 
-        logger.info(f"Slack message sent successfully. Status code: {response.status_code}")
+        logger.info(
+            f"Slack message sent successfully. Status code: {response.status_code}"
+        )
         return response
 
     except requests.exceptions.RequestException as e:

@@ -1,10 +1,14 @@
 """
 User schemas for API requests and responses.
 """
-from pydantic import BaseModel, EmailStr, UUID4
-from typing import Optional
+
 from datetime import datetime
+from typing import Optional
+
+from pydantic import UUID4, BaseModel, EmailStr
+
 from app.core.enums import UserRole
+
 
 # --- Base Schemas ---
 # Properties shared by all user-related schemas
@@ -15,14 +19,17 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
     role: Optional[UserRole] = UserRole.ADMIN  # Default role for superuser
 
+
 # Properties required when creating a user
 class UserCreate(UserBase):
-    email: EmailStr # Email is required on creation
-    password: str   # Password is required on creation
+    email: EmailStr  # Email is required on creation
+    password: str  # Password is required on creation
+
 
 # Properties required when updating a user
 class UserUpdate(UserBase):
-    password: Optional[str] = None # Allow password updates
+    password: Optional[str] = None  # Allow password updates
+
 
 # --- Database Interaction Schemas ---
 # Properties stored in DB but not always returned to API (like hashed_password)
@@ -33,7 +40,8 @@ class UserInDBBase(UserBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True # Enable ORM mode (SQLAlchemy model -> Pydantic schema)
+        from_attributes = True  # Enable ORM mode (SQLAlchemy model -> Pydantic schema)
+
 
 # --- API Response Schema ---
 # Properties to return to the client (omits password)
@@ -43,4 +51,4 @@ class User(UserBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True # Enable ORM mode
+        from_attributes = True  # Enable ORM mode

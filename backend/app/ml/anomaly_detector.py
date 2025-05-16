@@ -1,10 +1,11 @@
-from app.core.config import settings, logger
 # Import necessary ML libraries (e.g., TensorFlow, Keras, Pandas, Scikit-learn)
 # import tensorflow as tf
 # import pandas as pd
 # import numpy as np
 # from sklearn.preprocessing import StandardScaler
-import random # Using random for placeholder logic
+import random  # Using random for placeholder logic
+
+from app.core.config import logger, settings
 
 # --- Placeholder for loading the trained model ---
 # model = None
@@ -63,20 +64,23 @@ async def detect_anomaly(traffic_vector: dict) -> tuple[bool, float]:
         # is_anomaly = reconstruction_error > ANOMALY_THRESHOLD
 
         # --- Placeholder Logic ---
-        await asyncio.sleep(0.01) # Simulate processing time
+        await asyncio.sleep(0.01)  # Simulate processing time
         reconstruction_error = random.uniform(0.01, 0.1)
         ANOMALY_THRESHOLD = 0.07
         is_anomaly = reconstruction_error > ANOMALY_THRESHOLD
         # --- End Placeholder ---
 
-
         if is_anomaly:
-            logger.warning(f"Anomaly detected! Reconstruction error: {reconstruction_error:.4f} > Threshold: {ANOMALY_THRESHOLD:.4f}. Vector: {traffic_vector}")
+            logger.warning(
+                f"Anomaly detected! Reconstruction error: {reconstruction_error:.4f} > Threshold: {ANOMALY_THRESHOLD:.4f}. Vector: {traffic_vector}"
+            )
         else:
-            logger.debug(f"Traffic vector normal. Reconstruction error: {reconstruction_error:.4f} <= Threshold: {ANOMALY_THRESHOLD:.4f}")
+            logger.debug(
+                f"Traffic vector normal. Reconstruction error: {reconstruction_error:.4f} <= Threshold: {ANOMALY_THRESHOLD:.4f}"
+            )
 
         return is_anomaly, reconstruction_error
 
     except Exception as e:
         logger.error(f"Error during anomaly detection: {e}", exc_info=True)
-        return False, 0.0 # Return non-anomaly on error
+        return False, 0.0  # Return non-anomaly on error

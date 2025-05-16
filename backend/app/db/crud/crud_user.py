@@ -1,11 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from app.core.password import get_password_hash, verify_password
 from app.db.models import User
 from app.schemas.user_schema import UserCreate, UserUpdate
-from app.core.password import get_password_hash, verify_password
+
 
 class CRUDUser:
     """CRUD operations for User model."""
@@ -40,11 +42,11 @@ class CRUDUser:
             full_name=obj_in.full_name,
             is_active=obj_in.is_active,
             is_superuser=obj_in.is_superuser,
-            role=obj_in.role
+            role=obj_in.role,
         )
         db.add(db_obj)
-        await db.commit() # Commit to get the ID generated
-        await db.refresh(db_obj) # Refresh to load relationships or defaults
+        await db.commit()  # Commit to get the ID generated
+        await db.refresh(db_obj)  # Refresh to load relationships or defaults
         return db_obj
 
     async def update(
@@ -54,17 +56,18 @@ class CRUDUser:
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True) # Use model_dump for Pydantic v2+
+            update_data = obj_in.model_dump(
+                exclude_unset=True
+            )  # Use model_dump for Pydantic v2+
 
         if "password" in update_data and update_data["password"]:
             hashed_password = get_password_hash(update_data["password"])
             update_data["hashed_password"] = hashed_password
-            del update_data["password"] # Don't store plain password
+            del update_data["password"]  # Don't store plain password
         else:
             # Ensure password/hashed_password isn't accidentally set to None if not provided
             update_data.pop("password", None)
             update_data.pop("hashed_password", None)
-
 
         for field, value in update_data.items():
             setattr(db_obj, field, value)
@@ -81,7 +84,7 @@ class CRUDUser:
         user = await self.get_by_email(db, email=email)
         if not user:
             return None
-        if not user.is_active: # Optional: check if user is active
+        if not user.is_active:  # Optional: check if user is active
             return None
         if not verify_password(password, user.hashed_password):
             return None
@@ -90,6 +93,7 @@ class CRUDUser:
     async def is_superuser(self, user: User) -> bool:
         """Check if a user is a superuser."""
         return user.is_superuser
+
 
 # Instantiate the CRUD class
 user = CRUDUser()

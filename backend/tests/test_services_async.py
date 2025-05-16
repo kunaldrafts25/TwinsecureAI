@@ -2,23 +2,26 @@
 Tests for service modules.
 These tests focus on improving code coverage for service modules.
 """
-import pytest
+
+import asyncio
 import json
-from unittest.mock import patch, MagicMock, AsyncMock
-from datetime import datetime
 import os
 import tempfile
-import asyncio
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Import services to test
 from app.services.alerting.client import AlertingClient
+from app.services.alerting.discord import DiscordAlerter
 from app.services.alerting.email import EmailAlerter
 from app.services.alerting.slack import SlackAlerter
-from app.services.alerting.discord import DiscordAlerter
 from app.services.enrichment.abuseipdb import AbuseIPDBClient
 from app.services.enrichment.geoip import GeoIPClient
 from app.services.rate_limiter import RateLimiter
-from app.services.validation import validate_ip, validate_email, validate_hostname
+from app.services.validation import validate_email, validate_hostname, validate_ip
+
 
 class TestAlertingClient:
     """Tests for the AlertingClient class."""
@@ -27,8 +30,14 @@ class TestAlertingClient:
         """Test initialization of AlertingClient."""
         client = AlertingClient(
             email_config={"enabled": True, "smtp_server": "smtp.example.com"},
-            slack_config={"enabled": True, "webhook_url": "https://hooks.slack.com/services/xxx"},
-            discord_config={"enabled": True, "webhook_url": "https://discord.com/api/webhooks/xxx"}
+            slack_config={
+                "enabled": True,
+                "webhook_url": "https://hooks.slack.com/services/xxx",
+            },
+            discord_config={
+                "enabled": True,
+                "webhook_url": "https://discord.com/api/webhooks/xxx",
+            },
         )
         assert client.email_alerter is not None
         assert client.slack_alerter is not None
@@ -38,9 +47,16 @@ class TestAlertingClient:
     async def test_send_alert(self):
         """Test sending alerts through all channels."""
         # Configure mocks
-        with patch('app.services.alerting.email.EmailAlerter.send_alert', new_callable=AsyncMock) as mock_email, \
-             patch('app.services.alerting.slack.SlackAlerter.send_alert', new_callable=AsyncMock) as mock_slack, \
-             patch('app.services.alerting.discord.DiscordAlerter.send_alert', new_callable=AsyncMock) as mock_discord:
+        with patch(
+            "app.services.alerting.email.EmailAlerter.send_alert",
+            new_callable=AsyncMock,
+        ) as mock_email, patch(
+            "app.services.alerting.slack.SlackAlerter.send_alert",
+            new_callable=AsyncMock,
+        ) as mock_slack, patch(
+            "app.services.alerting.discord.DiscordAlerter.send_alert",
+            new_callable=AsyncMock,
+        ) as mock_discord:
 
             mock_email.return_value = True
             mock_slack.return_value = True
@@ -49,8 +65,14 @@ class TestAlertingClient:
             # Create client with all alerters enabled
             client = AlertingClient(
                 email_config={"enabled": True, "smtp_server": "smtp.example.com"},
-                slack_config={"enabled": True, "webhook_url": "https://hooks.slack.com/services/xxx"},
-                discord_config={"enabled": True, "webhook_url": "https://discord.com/api/webhooks/xxx"}
+                slack_config={
+                    "enabled": True,
+                    "webhook_url": "https://hooks.slack.com/services/xxx",
+                },
+                discord_config={
+                    "enabled": True,
+                    "webhook_url": "https://discord.com/api/webhooks/xxx",
+                },
             )
 
             # Send alert
@@ -58,7 +80,7 @@ class TestAlertingClient:
                 "id": "123",
                 "title": "Test Alert",
                 "severity": "HIGH",
-                "description": "This is a test alert"
+                "description": "This is a test alert",
             }
             result = await client.send_alert(alert_data)
 
@@ -74,14 +96,17 @@ class TestAlertingClient:
     async def test_send_alert_email_only(self):
         """Test sending alerts through email only."""
         # Configure mock
-        with patch('app.services.alerting.email.EmailAlerter.send_alert', new_callable=AsyncMock) as mock_email:
+        with patch(
+            "app.services.alerting.email.EmailAlerter.send_alert",
+            new_callable=AsyncMock,
+        ) as mock_email:
             mock_email.return_value = True
 
             # Create client with only email enabled
             client = AlertingClient(
                 email_config={"enabled": True, "smtp_server": "smtp.example.com"},
                 slack_config={"enabled": False},
-                discord_config={"enabled": False}
+                discord_config={"enabled": False},
             )
 
             # Send alert
@@ -89,7 +114,7 @@ class TestAlertingClient:
                 "id": "123",
                 "title": "Test Alert",
                 "severity": "HIGH",
-                "description": "This is a test alert"
+                "description": "This is a test alert",
             }
             result = await client.send_alert(alert_data)
 
@@ -98,6 +123,7 @@ class TestAlertingClient:
             assert "slack" not in result
             assert "discord" not in result
             mock_email.assert_called_once()
+
 
 class TestEmailAlerter:
     """Tests for the EmailAlerter class."""
@@ -112,11 +138,13 @@ class TestEmailAlerter:
             username="user",
             password="pass",
             from_email="alerts@example.com",
-            to_emails=["admin@example.com"]
+            to_emails=["admin@example.com"],
         )
 
         # Patch the _send_email method to avoid actual SMTP operations
-        with patch.object(alerter, '_send_email', new_callable=AsyncMock) as mock_send_email:
+        with patch.object(
+            alerter, "_send_email", new_callable=AsyncMock
+        ) as mock_send_email:
             # Configure the mock to return None (success)
             mock_send_email.return_value = None
 
@@ -125,7 +153,7 @@ class TestEmailAlerter:
                 "id": "123",
                 "title": "Test Alert",
                 "severity": "HIGH",
-                "description": "This is a test alert"
+                "description": "This is a test alert",
             }
             result = await alerter.send_alert(alert_data)
 
@@ -137,6 +165,7 @@ class TestEmailAlerter:
             # Check that the first argument to _send_email contains the alert title
             args, _ = mock_send_email.call_args
             assert "Test Alert" in args[0]  # Subject should contain the title
+
 
 class TestSlackAlerter:
     """Tests for the SlackAlerter class."""
@@ -156,7 +185,7 @@ class TestSlackAlerter:
         mock_client.post = AsyncMock(return_value=mock_response)
 
         # Patch httpx.AsyncClient to return our mock
-        with patch('httpx.AsyncClient', return_value=mock_client):
+        with patch("httpx.AsyncClient", return_value=mock_client):
             # Create Slack alerter
             alerter = SlackAlerter(webhook_url="https://hooks.slack.com/services/xxx")
 
@@ -165,7 +194,7 @@ class TestSlackAlerter:
                 "id": "123",
                 "title": "Test Alert",
                 "severity": "HIGH",
-                "description": "This is a test alert"
+                "description": "This is a test alert",
             }
             result = await alerter.send_alert(alert_data)
 
@@ -177,6 +206,7 @@ class TestSlackAlerter:
             args, kwargs = mock_client.post.call_args
             assert alerter.webhook_url == args[0]
             assert "blocks" in kwargs["json"]
+
 
 class TestDiscordAlerter:
     """Tests for the DiscordAlerter class."""
@@ -196,7 +226,7 @@ class TestDiscordAlerter:
         mock_client.post = AsyncMock(return_value=mock_response)
 
         # Patch httpx.AsyncClient to return our mock
-        with patch('httpx.AsyncClient', return_value=mock_client):
+        with patch("httpx.AsyncClient", return_value=mock_client):
             # Create Discord alerter
             alerter = DiscordAlerter(webhook_url="https://discord.com/api/webhooks/xxx")
 
@@ -205,7 +235,7 @@ class TestDiscordAlerter:
                 "id": "123",
                 "title": "Test Alert",
                 "severity": "HIGH",
-                "description": "This is a test alert"
+                "description": "This is a test alert",
             }
             result = await alerter.send_alert(alert_data)
 
@@ -218,6 +248,7 @@ class TestDiscordAlerter:
             assert alerter.webhook_url == args[0]
             assert "embeds" in kwargs["json"]
 
+
 class TestAbuseIPDBClient:
     """Tests for the AbuseIPDBClient class."""
 
@@ -228,17 +259,19 @@ class TestAbuseIPDBClient:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status = MagicMock()
-        mock_response.json = MagicMock(return_value={
-            "data": {
-                "ipAddress": "192.168.1.1",
-                "abuseConfidenceScore": 80,
-                "countryCode": "CN",
-                "usageType": "Data Center/Web Hosting/Transit",
-                "isp": "Example ISP",
-                "domain": "example.com",
-                "totalReports": 25
+        mock_response.json = MagicMock(
+            return_value={
+                "data": {
+                    "ipAddress": "192.168.1.1",
+                    "abuseConfidenceScore": 80,
+                    "countryCode": "CN",
+                    "usageType": "Data Center/Web Hosting/Transit",
+                    "isp": "Example ISP",
+                    "domain": "example.com",
+                    "totalReports": 25,
+                }
             }
-        })
+        )
 
         # Create a mock for the AsyncClient.get method
         mock_client = MagicMock()
@@ -247,7 +280,7 @@ class TestAbuseIPDBClient:
         mock_client.get = AsyncMock(return_value=mock_response)
 
         # Patch httpx.AsyncClient to return our mock
-        with patch('httpx.AsyncClient', return_value=mock_client):
+        with patch("httpx.AsyncClient", return_value=mock_client):
             # Create AbuseIPDB client
             client = AbuseIPDBClient(api_key="test_key")
 
@@ -266,6 +299,7 @@ class TestAbuseIPDBClient:
             assert "ipAddress" in kwargs["params"]
             assert kwargs["params"]["ipAddress"] == "192.168.1.1"
 
+
 class TestGeoIPClient:
     """Tests for the GeoIPClient class."""
 
@@ -273,7 +307,9 @@ class TestGeoIPClient:
     async def test_lookup_ip(self):
         """Test looking up an IP with GeoIP service."""
         # Create a mock for the _lookup_ip_online method
-        with patch.object(GeoIPClient, '_lookup_ip_online', new_callable=AsyncMock) as mock_lookup:
+        with patch.object(
+            GeoIPClient, "_lookup_ip_online", new_callable=AsyncMock
+        ) as mock_lookup:
             # Configure the mock to return a test result
             mock_result = {
                 "ip": "192.168.1.1",
@@ -282,7 +318,7 @@ class TestGeoIPClient:
                 "city": "New York",
                 "latitude": 40.7128,
                 "longitude": -74.0060,
-                "timezone": "America/New_York"
+                "timezone": "America/New_York",
             }
             mock_lookup.return_value = mock_result
 
@@ -297,6 +333,7 @@ class TestGeoIPClient:
             assert result["country_code"] == "US"
             assert result["city"] == "New York"
             mock_lookup.assert_called_once_with("192.168.1.1")
+
 
 class TestRateLimiter:
     """Tests for the RateLimiter class."""
@@ -325,6 +362,7 @@ class TestRateLimiter:
         # Test reset
         limiter.reset("test_key")
         assert await limiter.check_rate_limit("test_key") == True
+
 
 class TestValidation:
     """Tests for validation functions."""

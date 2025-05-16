@@ -1,26 +1,35 @@
-from app.core.config import settings, logger
-from app.schemas import Alert # Use the Alert schema for type hinting
-import asyncio # For running multiple alerts concurrently
-from app.db.models import Report # Import Report model if needed for type hinting report_data
+import asyncio  # For running multiple alerts concurrently
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+
+import backoff
+
+from app.core.config import logger, settings
+from app.db.models import (  # Import Report model if needed for type hinting report_data
+    Report,
+)
+from app.schemas import Alert  # Use the Alert schema for type hinting
+
 from ..rate_limiter import RateLimiter
 from ..validation import validate_alert_payload
-import backoff
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
+from .discord import DiscordAlerter, send_discord_message
 
 # Import alerters
 from .email import EmailAlerter, send_email_alert
 from .slack import SlackAlerter, send_slack_message
-from .discord import DiscordAlerter, send_discord_message
+
 
 class AlertingClient:
     """
     Client to orchestrate sending alerts via multiple channels.
     """
 
-    def __init__(self, email_config: Optional[Dict[str, Any]] = None,
-                 slack_config: Optional[Dict[str, Any]] = None,
-                 discord_config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        email_config: Optional[Dict[str, Any]] = None,
+        slack_config: Optional[Dict[str, Any]] = None,
+        discord_config: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize the alerting client with configurations for different alerters.
 
@@ -29,7 +38,9 @@ class AlertingClient:
             slack_config: Configuration for Slack alerter
             discord_config: Configuration for Discord alerter
         """
-        self.rate_limiter = RateLimiter(max_requests=100, time_window=60)  # 100 requests per minute
+        self.rate_limiter = RateLimiter(
+            max_requests=100, time_window=60
+        )  # 100 requests per minute
 
         # Initialize alerters
         self.email_alerter = None
@@ -44,40 +55,35 @@ class AlertingClient:
                 username=email_config.get("username", settings.SMTP_USER),
                 password=email_config.get("password", settings.SMTP_PASSWORD),
                 from_email=email_config.get("from_email", settings.EMAILS_FROM_EMAIL),
-                to_emails=email_config.get("to_emails", settings.ALERT_RECIPIENTS)
+                to_emails=email_config.get("to_emails", settings.ALERT_RECIPIENTS),
             )
 
         # Set up Slack alerter if enabled
         if slack_config and slack_config.get("enabled", True):
             self.slack_alerter = SlackAlerter(
                 webhook_url=slack_config.get("webhook_url", settings.SLACK_WEBHOOK_URL),
-                channel=slack_config.get("channel", settings.SLACK_CHANNEL)
+                channel=slack_config.get("channel", settings.SLACK_CHANNEL),
             )
 
         # Set up Discord alerter if enabled
         if discord_config and discord_config.get("enabled", True):
             self.discord_alerter = DiscordAlerter(
-                webhook_url=discord_config.get("webhook_url", settings.DISCORD_WEBHOOK_URL)
+                webhook_url=discord_config.get(
+                    "webhook_url", settings.DISCORD_WEBHOOK_URL
+                )
             )
 
         # Legacy channels dict for backward compatibility
         self.channels = {
-            'slack': send_slack_message,
-            'email': send_email_alert,
-            'discord': send_discord_message
+            "slack": send_slack_message,
+            "email": send_email_alert,
+            "discord": send_discord_message,
         }
 
-        self.retry_config = {
-            'max_tries': 3,
-            'max_time': 30,
-            'jitter': True
-        }
+        self.retry_config = {"max_tries": 3, "max_time": 30, "jitter": True}
 
     @backoff.on_exception(
-        backoff.expo,
-        (ConnectionError, TimeoutError),
-        max_tries=3,
-        max_time=30
+        backoff.expo, (ConnectionError, TimeoutError), max_tries=3, max_time=30
     )
     async def _send_with_retry(self, channel: str, **kwargs) -> bool:
         try:
@@ -88,9 +94,7 @@ class AlertingClient:
             raise
 
     async def send_alert(
-        self,
-        alert_data: Dict[str, Any],
-        channels: Optional[List[str]] = None
+        self, alert_data: Dict[str, Any], channels: Optional[List[str]] = None
     ) -> Dict[str, bool]:
         """
         Send an alert through configured alerters.
@@ -140,7 +144,7 @@ class AlertingClient:
         message: str,
         payload: Optional[Dict[str, Any]] = None,
         channels: Optional[List[str]] = None,
-        retry: bool = True
+        retry: bool = True,
     ) -> Dict[str, bool]:
         """
         Legacy method to send an alert through multiple channels concurrently.
@@ -156,16 +160,18 @@ class AlertingClient:
         Returns:
             Dict mapping channel names to success status
         """
-        if not await self.rate_limiter.check_rate_limit('send_alert'):
+        if not await self.rate_limiter.check_rate_limit("send_alert"):
             logger.warning("Rate limit exceeded for send_alert")
             return {channel: False for channel in self.channels.keys()}
 
-        if not validate_alert_payload({
-            'type': alert_type,
-            'severity': severity,
-            'message': message,
-            'payload': payload
-        }):
+        if not validate_alert_payload(
+            {
+                "type": alert_type,
+                "severity": severity,
+                "message": message,
+                "payload": payload,
+            }
+        ):
             logger.error("Invalid alert payload")
             return {channel: False for channel in self.channels.keys()}
 
@@ -180,14 +186,14 @@ class AlertingClient:
                         title=f"{severity.upper()} Alert: {alert_type}",
                         message=message,
                         severity=severity,
-                        payload=payload
+                        payload=payload,
                     )
                 else:
                     await self.channels[channel](
                         title=f"{severity.upper()} Alert: {alert_type}",
                         message=message,
                         severity=severity,
-                        payload=payload
+                        payload=payload,
                     )
                     return True
             except Exception as e:
@@ -208,7 +214,7 @@ class AlertingClient:
         report_type: str,
         status: str,
         download_url: Optional[str] = None,
-        retry: bool = True
+        retry: bool = True,
     ) -> bool:
         """
         Send a notification about a generated report.
@@ -223,7 +229,7 @@ class AlertingClient:
         Returns:
             bool indicating success
         """
-        if not await self.rate_limiter.check_rate_limit('send_report'):
+        if not await self.rate_limiter.check_rate_limit("send_report"):
             logger.warning("Rate limit exceeded for send_report")
             return False
 
@@ -234,16 +240,16 @@ class AlertingClient:
         try:
             if retry:
                 return await self._send_with_retry(
-                    'email',
+                    "email",
                     subject=f"Report Notification: {report_type}",
                     content=message,
-                    severity="info"
+                    severity="info",
                 )
             else:
                 await send_email_alert(
                     subject=f"Report Notification: {report_type}",
                     content=message,
-                    severity="info"
+                    severity="info",
                 )
                 return True
         except Exception as e:
@@ -251,19 +257,17 @@ class AlertingClient:
             return False
 
     async def send_bulk_alerts(
-        self,
-        alerts: List[Dict[str, Any]],
-        channels: Optional[List[str]] = None
+        self, alerts: List[Dict[str, Any]], channels: Optional[List[str]] = None
     ) -> Dict[str, List[bool]]:
         results = {channel: [] for channel in (channels or self.channels.keys())}
 
         for alert in alerts:
             alert_results = await self.send_alert(
-                alert_type=alert['type'],
-                severity=alert['severity'],
-                message=alert['message'],
-                payload=alert.get('payload'),
-                channels=channels
+                alert_type=alert["type"],
+                severity=alert["severity"],
+                message=alert["message"],
+                payload=alert.get("payload"),
+                channels=channels,
             )
 
             for channel, result in alert_results.items():
@@ -277,19 +281,25 @@ class AlertingClient:
             for channel in self.channels.keys()
         }
 
+
 # Instantiate the client for use in endpoints
 alert_client = AlertingClient()
 
-#-----------------------------------------------------#
+# -----------------------------------------------------#
 
 # app/services/alerting/slack.py
 
-import httpx
-from app.core.config import settings, logger
-from app.schemas import Alert # Import Alert schema for type hinting
 from typing import Optional
 
-async def send_slack_message(title: str, details: str, alert_data: Optional[Alert] = None):
+import httpx
+
+from app.core.config import logger, settings
+from app.schemas import Alert  # Import Alert schema for type hinting
+
+
+async def send_slack_message(
+    title: str, details: str, alert_data: Optional[Alert] = None
+):
     """
     Sends a formatted message to the configured Slack channel via webhook.
 
@@ -307,22 +317,13 @@ async def send_slack_message(title: str, details: str, alert_data: Optional[Aler
     blocks = [
         {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": title,
-                "emoji": True
-            }
+            "text": {"type": "plain_text", "text": title, "emoji": True},
         },
-        {
-            "type": "divider"
-        },
+        {"type": "divider"},
         {
             "type": "section",
-            "text": {
-                "type": "mrkdwn", # Use Markdown
-                "text": details
-            }
-        }
+            "text": {"type": "mrkdwn", "text": details},  # Use Markdown
+        },
     ]
 
     # Optional: Add buttons for actions like Acknowledge, View Logs
@@ -344,32 +345,33 @@ async def send_slack_message(title: str, details: str, alert_data: Optional[Aler
         #     "text": { "type": "plain_text", "text": "View Logs", "emoji": True },
         #     "url": log_link
         # })
-        pass # Add actions here if needed
+        pass  # Add actions here if needed
 
     if action_elements:
-        blocks.append({
-            "type": "actions",
-            "elements": action_elements
-        })
+        blocks.append({"type": "actions", "elements": action_elements})
 
     payload = {
         "channel": settings.SLACK_CHANNEL,
         "username": "TwinSecure Bot",
         "icon_emoji": ":shield:",
-        "blocks": blocks
+        "blocks": blocks,
     }
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(settings.SLACK_WEBHOOK_URL, json=payload)
-            response.raise_for_status() # Raise exception for 4xx/5xx responses
+            response.raise_for_status()  # Raise exception for 4xx/5xx responses
         # Success logged by the calling function (alert_client)
     except httpx.RequestError as e:
         # Error logged by the calling function
-        raise ConnectionError(f"Failed to connect to Slack webhook: {e.request.url}") from e
+        raise ConnectionError(
+            f"Failed to connect to Slack webhook: {e.request.url}"
+        ) from e
     except httpx.HTTPStatusError as e:
         # Error logged by the calling function
-        raise ConnectionError(f"Slack API returned error {e.response.status_code}: {e.response.text}") from e
+        raise ConnectionError(
+            f"Slack API returned error {e.response.status_code}: {e.response.text}"
+        ) from e
     except Exception as e:
         # Error logged by the calling function
         raise RuntimeError(f"Unexpected error sending Slack notification: {e}") from e

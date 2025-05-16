@@ -2,26 +2,31 @@
 Database utilities for testing.
 This module provides utilities for setting up and tearing down test databases.
 """
+
+import asyncio
 import os
 import time
-import asyncio
-from typing import AsyncGenerator, Generator, Dict, Any
+
+# Define missing enums if they don't exist in the app
+from enum import Enum
+from typing import Any, AsyncGenerator, Dict, Generator
+
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
+from app.core.enums import AlertSeverity, AlertStatus, UserRole
+
 # Import app modules
 from app.db.base import Base
-from app.db.models.user import User
 from app.db.models.alert import Alert
-from app.core.enums import UserRole, AlertSeverity, AlertStatus
-# Define missing enums if they don't exist in the app
-from enum import Enum
+from app.db.models.user import User
 
 try:
     from app.core.enums import AlertType
 except ImportError:
+
     class AlertType(str, Enum):
         INTRUSION = "INTRUSION"
         MALWARE = "MALWARE"
@@ -30,15 +35,19 @@ except ImportError:
         SUSPICIOUS = "SUSPICIOUS"
         POLICY_VIOLATION = "POLICY_VIOLATION"
 
+
 try:
     from app.core.enums import AlertSource
 except ImportError:
+
     class AlertSource(str, Enum):
         HONEYPOT = "HONEYPOT"
         IDS = "IDS"
         FIREWALL = "FIREWALL"
         SIEM = "SIEM"
         MANUAL = "MANUAL"
+
+
 from app.core.password import get_password_hash
 
 # Use SQLite for testing
@@ -61,6 +70,7 @@ TestingSessionLocal = sessionmaker(
     autoflush=False,
 )
 
+
 async def init_test_db() -> None:
     """
     Initialize the test database by creating all tables.
@@ -69,8 +79,10 @@ async def init_test_db() -> None:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
+
 class AsyncSessionContext:
     """Context manager for async database sessions."""
+
     def __init__(self):
         self.session = TestingSessionLocal()
 
@@ -80,18 +92,20 @@ class AsyncSessionContext:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.session.close()
 
+
 def get_test_db():
     """
     Get a test database session as a context manager.
     """
     return AsyncSessionContext()
 
+
 async def create_test_user(
     db: AsyncSession,
     email: str = "test@example.com",
     password: str = "password",
     is_superuser: bool = False,
-    role: UserRole = UserRole.VIEWER
+    role: UserRole = UserRole.VIEWER,
 ) -> User:
     """
     Create a test user in the database.
@@ -103,12 +117,13 @@ async def create_test_user(
         full_name=f"Test User {email}",
         is_active=True,
         is_superuser=is_superuser,
-        role=role
+        role=role,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return user
+
 
 async def create_test_alert(
     db: AsyncSession,
@@ -116,7 +131,7 @@ async def create_test_alert(
     severity: AlertSeverity = AlertSeverity.MEDIUM,
     status: AlertStatus = AlertStatus.NEW,
     source_ip: str = "192.168.1.100",
-    assigned_to_id = None
+    assigned_to_id=None,
 ) -> Alert:
     """
     Create a test alert in the database.
@@ -128,7 +143,7 @@ async def create_test_alert(
         status=status,
         source_ip=source_ip,
         description="Test alert description",
-        assigned_to_id=assigned_to_id
+        assigned_to_id=assigned_to_id,
     )
 
     # Set alert_type and source if the fields exist
@@ -149,6 +164,7 @@ async def create_test_alert(
     await db.refresh(alert)
     return alert
 
+
 def get_test_settings() -> Dict[str, Any]:
     """
     Get test settings for the application.
@@ -165,6 +181,7 @@ def get_test_settings() -> Dict[str, Any]:
         "DATABASE_URL": TEST_DATABASE_URL,
     }
 
+
 async def close_engine():
     """
     Close the test engine to release all connections.
@@ -173,6 +190,7 @@ async def close_engine():
         await test_engine.dispose()
     except Exception as e:
         print(f"Error disposing engine: {e}")
+
 
 def cleanup_test_db() -> None:
     """
@@ -210,7 +228,9 @@ def cleanup_test_db() -> None:
             break
         except PermissionError:
             if i < max_retries - 1:
-                print(f"Could not remove database file, retrying ({i+1}/{max_retries})...")
+                print(
+                    f"Could not remove database file, retrying ({i+1}/{max_retries})..."
+                )
                 time.sleep(0.5)  # Wait a bit before retrying
             else:
                 print("Could not remove database file after multiple attempts.")

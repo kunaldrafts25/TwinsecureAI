@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
-from app.schemas import User, UserCreate, UserUpdate
-from app.core.dependencies import get_current_active_user, get_current_active_superuser
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.dependencies import get_current_active_superuser, get_current_active_user
 from app.db import crud
 from app.db.session import get_db
+from app.schemas import User, UserCreate, UserUpdate
 
 # You will need to import necessary schemas and dependencies here later
 # from app.schemas.user import User, UserCreate, UserUpdate, UserInDB # Example user schemas
@@ -19,9 +21,10 @@ router = APIRouter()
 # Assign the router instance to a variable named 'users'
 users = router
 
+
 # Add your user-related endpoints here later
 # Example placeholder endpoint:
-@router.get("/me", response_model=dict) # Replace dict with your User schema
+@router.get("/me", response_model=dict)  # Replace dict with your User schema
 async def read_users_me(
     # current_user: User = Depends(get_current_active_user) # Example dependency usage
 ):
@@ -29,7 +32,8 @@ async def read_users_me(
     Get current user.
     """
     # return current_user # Example return
-    return {"message": "User endpoint placeholder"} # Placeholder response
+    return {"message": "User endpoint placeholder"}  # Placeholder response
+
 
 @router.get("/", response_model=List[User])
 async def list_users(
@@ -38,6 +42,7 @@ async def list_users(
 ):
     users = await crud.user.get_multi(db)
     return users
+
 
 @router.get("/{user_id}", response_model=User)
 async def get_user(
@@ -50,6 +55,7 @@ async def get_user(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_in: UserCreate,
@@ -58,6 +64,7 @@ async def create_user(
 ):
     user = await crud.user.create(db, obj_in=user_in)
     return user
+
 
 @router.put("/{user_id}", response_model=User)
 async def update_user(
@@ -72,6 +79,7 @@ async def update_user(
     updated_user = await crud.user.update(db, db_obj=user, obj_in=user_in)
     return updated_user
 
+
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: UUID,
@@ -83,5 +91,6 @@ async def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     await crud.user.delete(db, user_id=user_id)
     return None
+
 
 # Add other endpoints like create user, get user by id, etc.

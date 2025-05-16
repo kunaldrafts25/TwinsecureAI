@@ -1,11 +1,19 @@
 """
 Tests for honeypot endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
 # Import fixtures
-from tests.conftest import client, user_token, superuser_token, user_auth_headers, superuser_auth_headers
+from tests.conftest import (
+    client,
+    superuser_auth_headers,
+    superuser_token,
+    user_auth_headers,
+    user_token,
+)
+
 
 def test_get_honeypot_authenticated(client, user_auth_headers):
     """Test getting honeypot data with authentication."""
@@ -23,6 +31,7 @@ def test_get_honeypot_authenticated(client, user_auth_headers):
     assert "source_ip" in event
     assert "event_type" in event
     assert "details" in event
+
 
 def test_get_honeypot_unauthenticated(client):
     """Test getting honeypot data without authentication."""

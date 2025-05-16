@@ -1,11 +1,19 @@
 """
 Tests for alert endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
 # Import fixtures
-from tests.conftest import client, user_token, superuser_token, user_auth_headers, superuser_auth_headers
+from tests.conftest import (
+    client,
+    superuser_auth_headers,
+    superuser_token,
+    user_auth_headers,
+    user_token,
+)
+
 
 def test_get_alerts_authenticated(client, user_auth_headers):
     """Test getting alerts with authentication."""
@@ -22,11 +30,13 @@ def test_get_alerts_authenticated(client, user_auth_headers):
     assert "status" in alert
     assert "created_at" in alert
 
+
 def test_get_alerts_unauthenticated(client):
     """Test getting alerts without authentication."""
     response = client.get("/api/v1/alerts/")
     assert response.status_code == 401
     assert response.json() == {"detail": "Not authenticated"}
+
 
 def test_get_specific_alert(client, user_auth_headers):
     """Test getting a specific alert by ID."""
@@ -34,21 +44,23 @@ def test_get_specific_alert(client, user_auth_headers):
     response = client.get("/api/v1/alerts/", headers=user_auth_headers)
     alerts = response.json()
     alert_id = alerts[0]["id"]
-    
+
     # Then get a specific alert
     response = client.get(f"/api/v1/alerts/{alert_id}", headers=user_auth_headers)
     assert response.status_code == 200
     alert = response.json()
     assert alert["id"] == alert_id
 
+
 def test_get_nonexistent_alert(client, user_auth_headers):
     """Test getting a non-existent alert."""
     response = client.get(
         "/api/v1/alerts/999999999-9999-9999-9999-999999999999",
-        headers=user_auth_headers
+        headers=user_auth_headers,
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Alert not found"}
+
 
 def test_create_alert(client, user_auth_headers):
     """Test creating a new alert."""
@@ -58,14 +70,10 @@ def test_create_alert(client, user_auth_headers):
         "severity": "HIGH",
         "status": "NEW",
         "title": "Phishing Email Detected",
-        "description": "Suspicious email with malicious attachment"
+        "description": "Suspicious email with malicious attachment",
     }
-    
-    response = client.post(
-        "/api/v1/alerts/",
-        json=new_alert,
-        headers=user_auth_headers
-    )
+
+    response = client.post("/api/v1/alerts/", json=new_alert, headers=user_auth_headers)
     assert response.status_code == 200
     created_alert = response.json()
     assert "id" in created_alert
@@ -73,7 +81,7 @@ def test_create_alert(client, user_auth_headers):
     assert created_alert["severity"] == new_alert["severity"]
     assert created_alert["title"] == new_alert["title"]
     assert "created_at" in created_alert
-    
+
     # Verify the alert was added to the database
     response = client.get("/api/v1/alerts/", headers=user_auth_headers)
     alerts = response.json()

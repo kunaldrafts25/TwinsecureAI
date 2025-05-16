@@ -1,17 +1,26 @@
+import json  # Import json for casting
+from typing import List, Optional, Union
+from uuid import UUID
+
+from sqlalchemy import String as SQLString  # Import cast and String for JSON filtering
+from sqlalchemy import (
+    asc,
+    cast,
+    desc,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import desc, asc, cast, String as SQLString # Import cast and String for JSON filtering
-from typing import Optional, List, Union
-from uuid import UUID
-import json # Import json for casting
 
 from app.db.models import Alert
-from app.schemas import AlertCreate, AlertUpdate, AlertQueryFilters
+from app.schemas import AlertCreate, AlertQueryFilters, AlertUpdate
+
 
 class CRUDAlert:
     """CRUD operations for Alert model."""
 
-    async def get(self, db: AsyncSession, alert_id: Union[UUID, str]) -> Optional[Alert]:
+    async def get(
+        self, db: AsyncSession, alert_id: Union[UUID, str]
+    ) -> Optional[Alert]:
         """Get a single alert by ID."""
         stmt = select(Alert).where(Alert.id == alert_id)
         result = await db.execute(stmt)
@@ -45,11 +54,10 @@ class CRUDAlert:
             # Note: This requires the country to be stored consistently, e.g., ip_info['country']
             # This filter might be slow on large datasets without specific JSON indexing in PG.
             # Use ->> to get JSON field as text
-            stmt = stmt.where(Alert.ip_info.op('->>')('country') == filters.country)
+            stmt = stmt.where(Alert.ip_info.op("->>")("country") == filters.country)
             # For case-insensitive matching:
             # from sqlalchemy import func as sqlfunc
             # stmt = stmt.where(sqlfunc.lower(Alert.ip_info.op('->>')('country')) == filters.country.lower())
-
 
         # Apply sorting (default: newest first)
         stmt = stmt.order_by(desc(Alert.triggered_at))
@@ -80,7 +88,7 @@ class CRUDAlert:
             update_data = obj_in.model_dump(exclude_unset=True)
 
         for field, value in update_data.items():
-            if hasattr(db_obj, field): # Check if the field exists on the model
+            if hasattr(db_obj, field):  # Check if the field exists on the model
                 setattr(db_obj, field, value)
 
         db.add(db_obj)
@@ -88,7 +96,9 @@ class CRUDAlert:
         await db.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db: AsyncSession, *, alert_id: Union[UUID, str]) -> Optional[Alert]:
+    async def delete(
+        self, db: AsyncSession, *, alert_id: Union[UUID, str]
+    ) -> Optional[Alert]:
         """Delete an alert by ID."""
         db_obj = await self.get(db, alert_id=alert_id)
         if db_obj:
@@ -96,6 +106,7 @@ class CRUDAlert:
             await db.commit()
             return db_obj
         return None
+
 
 # Instantiate the CRUD class
 alert = CRUDAlert()

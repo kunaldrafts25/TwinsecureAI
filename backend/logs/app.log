@@ -4907,3 +4907,376 @@ WHERE users.email = $1::VARCHAR
 2025-05-17 02:32:27,090 - app.core.config - WARNING - Token decoding failed or subject (sub) missing.
 2025-05-17 02:32:27,092 - app.core.config - ERROR - Database transaction rolled back due to error: 401: Could not validate credentials
 2025-05-17 02:33:23,492 - app.core.config - INFO - Logout endpoint called (stateless).
+2025-05-17 05:02:30,731 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:04:28,332 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:05:20,555 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:06:02,990 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:06:05,404 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:06:09,211 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:06:09,325 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:06:09,325 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:06:34,533 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:06:34,853 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:06:35,138 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:06:35,222 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:06:35,222 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:06:35,573 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:06:35,573 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:06:35,903 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "E:\ts\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-17 05:06:38,342 - app.core.config - INFO - Rate limiter middleware initialized with 100 requests per 60 seconds
+2025-05-17 05:06:38,360 - app.core.config - INFO - Login attempt for user: nonexistent@example.com
+2025-05-17 05:06:38,814 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-05-17 05:06:38,814 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:06:38,826 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-05-17 05:06:38,829 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:06:38,835 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-05-17 05:06:38,835 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:06:38,837 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-17 05:06:38,930 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.hashed_password, users.full_name, users.role, users.status, users.department, users.title, users.phone_number, users.is_active, users.is_superuser, users.failed_login_attempts, users.last_login_attempt, users.password_changed_at, users.mfa_enabled, users.mfa_secret, users.preferences, users.notification_settings, users.created_at, users.updated_at, users.last_login, users.created_by, users.updated_by 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2025-05-17 05:06:38,930 - sqlalchemy.engine.Engine - INFO - [generated in 0.00122s] ('nonexistent@example.com',)
+2025-05-17 05:06:39,051 - app.core.config - WARNING - Authentication failed for user: nonexistent@example.com
+2025-05-17 05:06:39,052 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-17 05:06:39,053 - app.core.config - ERROR - Database transaction rolled back due to error: 401: Incorrect email or password
+2025-05-17 05:06:39,077 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:06:40,127 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 404 Not Found"
+2025-05-17 05:06:40,887 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:06:41,474 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:06:41,634 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:02,233 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:10:02,233 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:10:02,418 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:10:02,792 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:10:03,121 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:10:03,182 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:10:03,182 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:10:03,390 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:03,401 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:03,408 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:03,408 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/650e8400-e29b-41d4-a716-446655440000 "HTTP/1.1 200 OK"
+2025-05-17 05:10:03,424 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/999999999-9999-9999-9999-999999999999 "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:03,442 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:03,445 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:03,717 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "E:\ts\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-17 05:10:05,280 - app.core.config - INFO - Rate limiter middleware initialized with 100 requests per 60 seconds
+2025-05-17 05:10:05,291 - app.core.config - INFO - Login attempt for user: nonexistent@example.com
+2025-05-17 05:10:05,565 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-05-17 05:10:05,565 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:10:05,565 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-05-17 05:10:05,565 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:10:05,578 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-05-17 05:10:05,580 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:10:05,582 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-17 05:10:05,619 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.hashed_password, users.full_name, users.role, users.status, users.department, users.title, users.phone_number, users.is_active, users.is_superuser, users.failed_login_attempts, users.last_login_attempt, users.password_changed_at, users.mfa_enabled, users.mfa_secret, users.preferences, users.notification_settings, users.created_at, users.updated_at, users.last_login, users.created_by, users.updated_by 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2025-05-17 05:10:05,619 - sqlalchemy.engine.Engine - INFO - [generated in 0.00135s] ('nonexistent@example.com',)
+2025-05-17 05:10:05,680 - app.core.config - WARNING - Authentication failed for user: nonexistent@example.com
+2025-05-17 05:10:05,680 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-17 05:10:05,683 - app.core.config - ERROR - Database transaction rolled back due to error: 401: Incorrect email or password
+2025-05-17 05:10:05,685 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:06,623 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:07,386 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:07,913 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:08,080 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:08,107 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,116 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,128 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,144 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,169 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,188 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,223 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,238 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,255 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:10:08,270 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,285 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,307 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,319 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/01687de8-c506-40a9-ace5-add8087a3a06 "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,349 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,368 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,381 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,411 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,431 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,447 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,468 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,485 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,519 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,557 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,590 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,636 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,661 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,692 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,720 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,744 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:10:08,775 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:10:08,790 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:10:08,800 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:10:08,816 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,821 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,824 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,828 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,836 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,839 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:08,857 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/invalid-uuid "HTTP/1.1 404 Not Found"
+2025-05-17 05:10:08,872 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,872 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:08,880 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,183 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,201 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,232 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,251 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,255 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,260 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,264 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,267 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,270 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,272 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,277 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,281 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,284 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,308 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,315 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,318 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,323 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,331 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,352 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,356 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,364 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,368 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,372 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,392 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,397 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,400 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,448 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,470 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,492 - httpx - INFO - HTTP Request: OPTIONS http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,515 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,519 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,522 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,530 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,533 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,553 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:10:13,588 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,595 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,599 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,604 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,610 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,616 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,619 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,625 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,631 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,635 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,638 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,664 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,666 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,676 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,680 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,686 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:10:13,689 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,696 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,700 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,703 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,709 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,731 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,734 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,738 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,742 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:10:13,748 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:13:43,502 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:13:43,957 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:13:44,230 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:13:44,286 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:13:44,287 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:13:44,648 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:13:44,649 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:13:44,990 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "E:\ts\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-17 05:13:47,352 - app.core.config - INFO - Rate limiter middleware initialized with 100 requests per 60 seconds
+2025-05-17 05:13:47,367 - app.core.config - INFO - Login attempt for user: nonexistent@example.com
+2025-05-17 05:13:47,589 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-05-17 05:13:47,589 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:13:47,597 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-05-17 05:13:47,598 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:13:47,602 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-05-17 05:13:47,602 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:13:47,604 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-17 05:13:47,639 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.hashed_password, users.full_name, users.role, users.status, users.department, users.title, users.phone_number, users.is_active, users.is_superuser, users.failed_login_attempts, users.last_login_attempt, users.password_changed_at, users.mfa_enabled, users.mfa_secret, users.preferences, users.notification_settings, users.created_at, users.updated_at, users.last_login, users.created_by, users.updated_by 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2025-05-17 05:13:47,639 - sqlalchemy.engine.Engine - INFO - [generated in 0.00069s] ('nonexistent@example.com',)
+2025-05-17 05:13:47,697 - app.core.config - WARNING - Authentication failed for user: nonexistent@example.com
+2025-05-17 05:13:47,698 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-17 05:13:47,699 - app.core.config - ERROR - Database transaction rolled back due to error: 401: Incorrect email or password
+2025-05-17 05:13:47,715 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:13:48,494 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:13:49,216 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:13:49,221 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:13:49,740 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:13:49,744 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:13:49,967 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:13:49,976 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:14:05,709 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:14:42,300 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:14:59,067 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:14:59,068 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:14:59,316 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:14:59,731 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:15:00,077 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:15:00,188 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:15:00,188 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:15:00,502 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:00,513 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:00,523 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:00,528 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/650e8400-e29b-41d4-a716-446655440000 "HTTP/1.1 200 OK"
+2025-05-17 05:15:00,543 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/999999999-9999-9999-9999-999999999999 "HTTP/1.1 404 Not Found"
+2025-05-17 05:15:00,559 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:00,564 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:00,770 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "E:\ts\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-17 05:15:03,305 - app.core.config - INFO - Rate limiter middleware initialized with 100 requests per 60 seconds
+2025-05-17 05:15:03,317 - app.core.config - INFO - Login attempt for user: nonexistent@example.com
+2025-05-17 05:15:03,595 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-05-17 05:15:03,597 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:15:03,601 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-05-17 05:15:03,603 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:15:03,608 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-05-17 05:15:03,609 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-17 05:15:03,611 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-17 05:15:03,759 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.hashed_password, users.full_name, users.role, users.status, users.department, users.title, users.phone_number, users.is_active, users.is_superuser, users.failed_login_attempts, users.last_login_attempt, users.password_changed_at, users.mfa_enabled, users.mfa_secret, users.preferences, users.notification_settings, users.created_at, users.updated_at, users.last_login, users.created_by, users.updated_by 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2025-05-17 05:15:03,759 - sqlalchemy.engine.Engine - INFO - [generated in 0.00108s] ('nonexistent@example.com',)
+2025-05-17 05:15:03,817 - app.core.config - WARNING - Authentication failed for user: nonexistent@example.com
+2025-05-17 05:15:03,817 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-17 05:15:03,818 - app.core.config - ERROR - Database transaction rolled back due to error: 401: Incorrect email or password
+2025-05-17 05:15:03,823 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:04,878 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:05,781 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:15:05,784 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:15:06,476 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:15:06,476 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:15:06,744 - app.core.config - ERROR - Unhandled error: 'State' object has no attribute 'mock_db'
+2025-05-17 05:15:06,752 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 500 Internal Server Error"
+2025-05-17 05:15:06,814 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:06,837 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:06,863 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:06,884 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:06,906 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:06,925 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:06,959 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 200 OK"
+2025-05-17 05:15:06,978 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,000 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:15:07,011 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,032 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,046 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,053 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/4e4fa3d8-433c-43e7-8db9-2c1ded0b7586 "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,070 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,096 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,118 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,130 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,144 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,170 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,183 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,198 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,215 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,237 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,258 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,271 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,303 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,320 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,338 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,355 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:15:07,379 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:15:07,397 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:15:07,399 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 422 Unprocessable Entity"
+2025-05-17 05:15:07,416 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,416 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,426 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,428 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,434 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,438 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:07,453 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/invalid-uuid "HTTP/1.1 404 Not Found"
+2025-05-17 05:15:07,468 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,468 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:07,478 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,121 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,134 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,147 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,164 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,168 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,171 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,173 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,176 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,178 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,181 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,185 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,188 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,190 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,208 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,210 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,213 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,218 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,220 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,228 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,231 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,234 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,235 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,237 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,249 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,254 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,256 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,296 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,310 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,322 - httpx - INFO - HTTP Request: OPTIONS http://testserver/api/v1/system/health "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,331 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/me "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,334 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,336 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/alerts/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,337 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/reports/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,340 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/honeypot/ "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,355 - httpx - INFO - HTTP Request: GET http://testserver/api/v1/users/ "HTTP/1.1 403 Forbidden"
+2025-05-17 05:15:12,381 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,387 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,389 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,394 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,398 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,403 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,406 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,408 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,411 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,414 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,417 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,426 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,429 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,432 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,435 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,437 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 401 Unauthorized"
+2025-05-17 05:15:12,440 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,442 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,445 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,448 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,452 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,469 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,475 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,479 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,483 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:15:12,493 - httpx - INFO - HTTP Request: POST http://testserver/api/v1/alerts/ "HTTP/1.1 200 OK"
+2025-05-17 05:16:59,809 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"

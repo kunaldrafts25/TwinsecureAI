@@ -1,19 +1,21 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import ValidationError # Import ValidationError for Pydantic v2+
 from uuid import UUID
 
-from app.core.config import settings, logger
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import ValidationError  # Import ValidationError for Pydantic v2+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core import security
+from app.core.config import logger, settings
 from app.db import crud
-from app.db.session import get_db
 from app.db.models import User
+from app.db.session import get_db
 from app.schemas import TokenPayload
 
 # OAuth2PasswordBearer scheme configuration
 # tokenUrl points to the endpoint where the client gets the token (e.g., /api/v1/auth/login)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
@@ -57,6 +59,7 @@ async def get_current_user(
     logger.debug(f"Authenticated user retrieved: {user.email} (ID: {user.id})")
     return user
 
+
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
@@ -65,10 +68,15 @@ async def get_current_active_user(
     Builds upon get_current_user by adding an explicit active check.
     """
     if not current_user.is_active:
-        logger.warning(f"Inactive user attempted access requiring active status: {current_user.email}")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+        logger.warning(
+            f"Inactive user attempted access requiring active status: {current_user.email}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
+        )
     logger.debug(f"Active user confirmed: {current_user.email}")
     return current_user
+
 
 async def get_current_active_superuser(
     current_user: User = Depends(get_current_active_user),
@@ -78,12 +86,15 @@ async def get_current_active_superuser(
     Requires the user to be both active and a superuser.
     """
     if not crud.user.is_superuser(current_user):
-        logger.warning(f"Non-superuser attempted access requiring superuser role: {current_user.email}")
+        logger.warning(
+            f"Non-superuser attempted access requiring superuser role: {current_user.email}"
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges",
         )
     logger.debug(f"Superuser access granted: {current_user.email}")
     return current_user
+
 
 # You can add more dependencies here for specific roles if needed, e.g., get_current_analyst

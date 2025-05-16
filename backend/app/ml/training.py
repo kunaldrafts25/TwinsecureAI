@@ -1,4 +1,3 @@
-from app.core.config import settings, logger
 # Import necessary ML libraries
 # import tensorflow as tf
 # import pandas as pd
@@ -6,10 +5,14 @@ from app.core.config import settings, logger
 # from sklearn.preprocessing import StandardScaler
 # from app.db.session import AsyncSessionLocal # If fetching training data from DB
 # from app.db import crud # If fetching training data from DB
-import asyncio # For scheduling
-import schedule # For scheduling (or use APScheduler, Celery Beat, Cron)
-import time
+import asyncio  # For scheduling
 import threading
+import time
+
+import schedule  # For scheduling (or use APScheduler, Celery Beat, Cron)
+
+from app.core.config import logger, settings
+
 
 async def fetch_training_data():
     """
@@ -25,10 +28,11 @@ async def fetch_training_data():
     #     df = pd.DataFrame([...])
 
     # Placeholder: Generate dummy data
-    await asyncio.sleep(2) # Simulate fetch time
+    await asyncio.sleep(2)  # Simulate fetch time
     # df = pd.DataFrame(np.random.rand(1000, 5), columns=['feat1', 'feat2', 'feat3', 'feat4', 'feat5'])
     logger.info("Training data fetched (placeholder).")
-    return None # Return the DataFrame (df)
+    return None  # Return the DataFrame (df)
+
 
 async def train_autoencoder_model():
     """
@@ -93,12 +97,13 @@ async def train_autoencoder_model():
         # logger.info(f"ML model saved to: {settings.ML_MODEL_PATH}")
 
         # --- Placeholder ---
-        await asyncio.sleep(5) # Simulate training time
+        await asyncio.sleep(5)  # Simulate training time
         logger.info("ML model training finished (placeholder).")
         # --- End Placeholder ---
 
     except Exception as e:
         logger.error(f"Error during ML model training: {e}", exc_info=True)
+
 
 # --- Scheduling Logic ---
 # This uses the 'schedule' library. You might prefer APScheduler for async or Celery Beat.
@@ -110,17 +115,23 @@ def run_training_scheduler():
 
     # Example: schedule.every().day.at("02:00").do(lambda: asyncio.run(train_autoencoder_model()))
     # Parse cron schedule if needed, or use a library that supports cron directly (like APScheduler)
-    logger.info(f"Scheduling ML training with schedule: {settings.ML_TRAINING_SCHEDULE}")
+    logger.info(
+        f"Scheduling ML training with schedule: {settings.ML_TRAINING_SCHEDULE}"
+    )
     # This is a basic example; robust cron parsing/scheduling is more complex with 'schedule' library
-    if settings.ML_TRAINING_SCHEDULE == "0 2 * * *": # Basic check for 2 AM daily
-         schedule.every().day.at("02:00").do(lambda: asyncio.run(train_autoencoder_model()))
+    if settings.ML_TRAINING_SCHEDULE == "0 2 * * *":  # Basic check for 2 AM daily
+        schedule.every().day.at("02:00").do(
+            lambda: asyncio.run(train_autoencoder_model())
+        )
     else:
-         logger.warning(f"ML_TRAINING_SCHEDULE format '{settings.ML_TRAINING_SCHEDULE}' not fully supported by basic scheduler. Only '0 2 * * *' (2 AM daily) is implemented.")
-
+        logger.warning(
+            f"ML_TRAINING_SCHEDULE format '{settings.ML_TRAINING_SCHEDULE}' not fully supported by basic scheduler. Only '0 2 * * *' (2 AM daily) is implemented."
+        )
 
     while True:
         schedule.run_pending()
-        time.sleep(60) # Check every minute
+        time.sleep(60)  # Check every minute
+
 
 def start_ml_training_schedule():
     """Starts the ML training scheduler in a separate thread."""
@@ -129,7 +140,10 @@ def start_ml_training_schedule():
         scheduler_thread = threading.Thread(target=run_training_scheduler, daemon=True)
         scheduler_thread.start()
     else:
-        logger.info("ML model path or training schedule not configured. Scheduler not started.")
+        logger.info(
+            "ML model path or training schedule not configured. Scheduler not started."
+        )
+
 
 # Call this function during application startup (e.g., in main.py's startup event)
 # Be mindful of running async code within the scheduled job if using 'schedule'.
