@@ -73,9 +73,7 @@ class DatabaseSettings(BaseSettings):
     )
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: SecretStr = Field(
-        default_factory=lambda: SecretStr("kUNAL@#$12345")
-    )
+    POSTGRES_PASSWORD: str = "kUNAL@#$12345"
     POSTGRES_DB: str = "TwinSecure"  # Ensure consistent capitalization
     DATABASE_URL: Optional[str] = None
     POOL_SIZE: int = 20
@@ -90,7 +88,7 @@ class DatabaseSettings(BaseSettings):
         if isinstance(v, str):
             return v
         values = info.data
-        password = values["POSTGRES_PASSWORD"].get_secret_value()
+        password = values["POSTGRES_PASSWORD"]
         # URL encode special characters in password
         password = password.replace("@", "%40").replace("#", "%23").replace("$", "%24")
         db_name = values["POSTGRES_DB"]  # Get the database name
@@ -186,9 +184,7 @@ class Settings(BaseSettings):
     )
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: SecretStr = Field(
-        default_factory=lambda: SecretStr("kUNAL@#$12345")
-    )
+    POSTGRES_PASSWORD: str = "kUNAL@#$12345"
     POSTGRES_DB: str = "TwinSecure"  # Ensure consistent capitalization
     DATABASE_URL: Optional[str] = None
 
@@ -246,9 +242,7 @@ class Settings(BaseSettings):
 
     # First Superuser
     FIRST_SUPERUSER: EmailStr = Field(default="admin@example.com")
-    FIRST_SUPERUSER_PASSWORD: SecretStr = Field(
-        default_factory=lambda: SecretStr("admin123")
-    )
+    FIRST_SUPERUSER_PASSWORD: str = "admin123"
 
     # CORS Settings
     BACKEND_CORS_ORIGINS: List[str] = []
@@ -264,7 +258,7 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v
         values = info.data
-        password = values["POSTGRES_PASSWORD"].get_secret_value()
+        password = values["POSTGRES_PASSWORD"]
         # URL encode special characters in password
         password = password.replace("@", "%40").replace("#", "%23").replace("$", "%24")
         return (

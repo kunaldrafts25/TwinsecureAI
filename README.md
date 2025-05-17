@@ -228,6 +228,29 @@ twinsecure/
 
 You can use the provided test scripts to run tests with the correct environment setup:
 
+**Quick Health Check Test:**
+
+This is the simplest way to verify that the basic functionality is working:
+
+**Windows (PowerShell):**
+```powershell
+# Run health check test
+.\run_health_test.ps1
+```
+
+**Linux/macOS:**
+```bash
+# Make the script executable
+chmod +x run_health_test.sh
+
+# Run health check test
+./run_health_test.sh
+```
+
+**Full Test Suite:**
+
+For running the complete test suite or specific tests:
+
 **Windows (PowerShell):**
 ```powershell
 # Run health check tests
@@ -261,6 +284,9 @@ cd backend
 # Set PYTHONPATH to include the current directory
 export PYTHONPATH=$PYTHONPATH:$(pwd)  # On Windows: $env:PYTHONPATH = "$env:PYTHONPATH;$(pwd)"
 
+# Use test environment
+export DOTENV_FILE=".env.test"  # On Windows: $env:DOTENV_FILE = ".env.test"
+
 # Run all tests
 python -m pytest
 
@@ -271,6 +297,21 @@ python -m pytest --cov=app --cov-report=html --cov-report=term
 python -m pytest tests/test_health.py -v
 python -m pytest tests/test_api_auth.py -v
 ```
+
+**Database Testing:**
+
+For tests that require a PostgreSQL database:
+
+1. Make sure PostgreSQL is running
+2. Set the following environment variables:
+   ```bash
+   export TEST_DB=postgres
+   export TEST_PG_HOST=localhost
+   export TEST_PG_PORT=5432
+   export TEST_PG_USER=postgres
+   export TEST_PG_PASSWORD=kUNAL@#$12345
+   export TEST_PG_DB=test_twinsecure
+   ```
 
 ### Frontend Tests
 
@@ -310,6 +351,59 @@ TwinSecure includes a comprehensive monitoring stack:
 - **Prometheus**: Metrics collection at http://localhost:9090
 - **Grafana**: Metrics visualization at http://localhost:3001
 - **Elasticsearch**: Log aggregation at http://localhost:9200
+
+## Load Testing
+
+TwinSecure includes tools for load testing the backend API:
+
+### Running Load Tests Locally
+
+**Prerequisites:**
+- Python 3.10+ with pip
+- Locust (`pip install locust`)
+
+**Windows (PowerShell):**
+```powershell
+# Start the backend server in one terminal
+.\start_backend.ps1
+
+# Run load tests in another terminal
+.\run_load_test.ps1 -Users 10 -Duration 30
+```
+
+**Linux/macOS:**
+```bash
+# Make the scripts executable
+chmod +x start_backend.sh run_load_test.sh
+
+# Start the backend server in one terminal
+./start_backend.sh
+
+# Run load tests in another terminal
+./run_load_test.sh --users=10 --duration=30
+```
+
+### Running Load Tests with Docker Compose
+
+```bash
+# Create the locustfile.py if it doesn't exist
+touch locustfile.py
+
+# Start the backend and Locust
+docker-compose -f docker-compose.load-test.yml up -d
+
+# Access the Locust web interface
+# Open http://localhost:8089 in your browser
+```
+
+### Interpreting Load Test Results
+
+The load tests generate CSV files with the results:
+- `load_test_results_stats.csv`: Overall statistics
+- `load_test_results_stats_history.csv`: Statistics over time
+- `load_test_results_failures.csv`: Failed requests
+
+You can visualize these results using tools like Excel, Python with Pandas/Matplotlib, or import them into Grafana.
 
 ## License
 

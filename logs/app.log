@@ -2427,3 +2427,31 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-17 05:16:49,759 - app.core.config - INFO - Using ReportLab for PDF generation.
 2025-05-17 05:16:49,822 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
 2025-05-17 05:16:49,832 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:40:00,474 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:40:00,475 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:40:00,630 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:40:00,886 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:40:01,148 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:40:01,237 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:40:01,241 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:40:09,154 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:40:09,154 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:40:09,242 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:40:09,425 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:40:09,608 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:40:09,683 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:40:09,683 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:41:07,879 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:41:07,879 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:41:07,985 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:41:08,152 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:41:08,298 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:41:08,335 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:41:08,335 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
+2025-05-17 05:41:19,996 - tests.check_postgres - WARNING - PostgreSQL is not available: Failed to connect to PostgreSQL: password authentication failed for user "postgres"
+2025-05-17 05:41:19,996 - tests.check_postgres - INFO - Tests will use SQLite instead
+2025-05-17 05:41:20,093 - app.core.config - INFO - Async database engine created for URL: postgresql+asyncpg://postgres:kUNAL%40%23%2412345@localhost:5432/TwinSecure
+2025-05-17 05:41:20,264 - app.services.enrichment.geoip - INFO - GeoIP2 database loaded successfully from: E:\ts\GeoLite2-City.mmdb
+2025-05-17 05:41:20,421 - app.core.config - INFO - Using ReportLab for PDF generation.
+2025-05-17 05:41:20,465 - app.core.config - INFO - Rate limiting enabled: 100 requests per minute
+2025-05-17 05:41:20,465 - app.core.config - INFO - Configuring CORS with allow_origins: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:80', 'https://your-frontend-domain.com']
