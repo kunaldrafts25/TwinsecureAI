@@ -226,24 +226,49 @@ twinsecure/
 
 ### Backend Tests
 
+You can use the provided test scripts to run tests with the correct environment setup:
+
+**Windows (PowerShell):**
+```powershell
+# Run health check tests
+.\run_tests.ps1 -Health -Verbose
+
+# Run auth tests
+.\run_tests.ps1 -Auth -Verbose
+
+# Run all tests with coverage
+.\run_tests.ps1 -All -Coverage -Verbose
+```
+
+**Linux/macOS:**
+```bash
+# Make the script executable
+chmod +x run_tests.sh
+
+# Run health check tests
+./run_tests.sh --health --verbose
+
+# Run auth tests
+./run_tests.sh --auth --verbose
+
+# Run all tests with coverage
+./run_tests.sh --all --coverage --verbose
+```
+
+**Manual Testing:**
 ```bash
 cd backend
 # Set PYTHONPATH to include the current directory
 export PYTHONPATH=$PYTHONPATH:$(pwd)  # On Windows: $env:PYTHONPATH = "$env:PYTHONPATH;$(pwd)"
+
+# Run all tests
 python -m pytest
-```
 
-For coverage report:
-```bash
+# Generate coverage report
 python -m pytest --cov=app --cov-report=html --cov-report=term
-```
 
-For running specific tests:
-```bash
-# Run only health check tests
+# Run specific tests
 python -m pytest tests/test_health.py -v
-
-# Run API auth tests
 python -m pytest tests/test_api_auth.py -v
 ```
 
