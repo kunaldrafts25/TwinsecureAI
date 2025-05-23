@@ -407,7 +407,13 @@ You can visualize these results using tools like Excel, Python with Pandas/Matpl
 
 ## License
 
-[MIT License](LICENSE)
+This project is proprietary software. All rights reserved.
+
+**Copyright © 2024 TwinSecure. All rights reserved.**
+
+This software and associated documentation files (the "Software") are proprietary and confidential. Unauthorized copying, distribution, modification, or use of this software, via any medium, is strictly prohibited without explicit written permission from the copyright holder.
+
+For licensing inquiries, please contact: [kunalsingh2514@gmail.com]
 
 ---
 

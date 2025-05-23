@@ -1,4 +1,15 @@
 """
+TwinSecure - Advanced Cybersecurity Platform
+Copyright © 2024 TwinSecure. All rights reserved.
+
+This file is part of TwinSecure, a proprietary cybersecurity platform.
+Unauthorized copying, distribution, modification, or use of this software
+is strictly prohibited without explicit written permission.
+
+For licensing inquiries: kunalsingh2514@gmail.com
+"""
+
+"""
 Script to create an admin user directly in the database.
 This bypasses the normal application flow to help troubleshoot login issues.
 """
@@ -39,7 +50,7 @@ async def check_users_table():
             if not exists:
                 print("The 'users' table does not exist!")
                 return False
-            
+
             # Check if the users_admin partition exists
             result = await conn.execute(text(
                 "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users_admin')"
@@ -48,7 +59,7 @@ async def check_users_table():
             if not admin_partition_exists:
                 print("The 'users_admin' partition does not exist!")
                 return False
-                
+
             print("Users table and admin partition exist.")
             return True
     except Exception as e:
@@ -79,19 +90,19 @@ async def create_admin_user():
                 "SELECT COUNT(*) FROM users WHERE email = :email"
             ), {"email": "admin@finguard.com"})
             count = result.scalar()
-            
+
             if count > 0:
                 print(f"User with email admin@finguard.com already exists.")
                 return True
-            
+
             # Create the user
             user_id = uuid.uuid4()
             hashed_password = get_password_hash("123456789")
-            
+
             await session.execute(text("""
                 INSERT INTO users (
-                    id, email, hashed_password, full_name, role, status, 
-                    is_active, is_superuser, failed_login_attempts, 
+                    id, email, hashed_password, full_name, role, status,
+                    is_active, is_superuser, failed_login_attempts,
                     preferences, notification_settings
                 ) VALUES (
                     :id, :email, :hashed_password, :full_name, :role, :status,
@@ -111,7 +122,7 @@ async def create_admin_user():
                 "preferences": "{}",
                 "notification_settings": '{"email": true, "slack": false, "discord": false}'
             })
-            
+
             await session.commit()
             print(f"Admin user created successfully with email: admin@finguard.com")
             print(f"Password: 123456789")
@@ -123,24 +134,24 @@ async def create_admin_user():
 async def main():
     """Main function to run all checks and fixes"""
     print("Starting database checks and admin user creation...")
-    
+
     # Check database connection
     if not await check_database_connection():
         return
-    
+
     # Check users table
     table_exists = await check_users_table()
-    
+
     # Create admin partition if needed
     if not table_exists or not await create_admin_partition():
         print("Could not ensure admin partition exists.")
         return
-    
+
     # Create admin user
     if not await create_admin_user():
         print("Failed to create admin user.")
         return
-    
+
     print("All operations completed successfully!")
 
 if __name__ == "__main__":

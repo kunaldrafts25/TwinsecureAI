@@ -1,5 +1,14 @@
 # app/main.py
 """
+TwinSecure - Advanced Cybersecurity Platform
+Copyright © 2024 TwinSecure. All rights reserved.
+
+This file is part of TwinSecure, a proprietary cybersecurity platform.
+Unauthorized copying, distribution, modification, or use of this software
+is strictly prohibited without explicit written permission.
+
+For licensing inquiries: kunalsingh2514@gmail.com
+
 Main application module for TwinSecure AI Backend.
 
 This module initializes the FastAPI application, sets up middleware,
@@ -25,6 +34,7 @@ from app.api.api_v1.api import api_router  # API routes
 
 # Import application components
 from app.core.config import logger, settings  # Application configuration and logging
+from app.core.license_manager import license_manager  # License management
 from app.db import init_db  # Database initialization function
 from app.db.base import Base  # SQLAlchemy Base model for metadata
 from app.db.session import AsyncSessionLocal, engine  # Database session and engine
@@ -68,6 +78,14 @@ async def lifespan(app: FastAPI):
     """
     logger.info("Starting up TwinSecure AI Backend...")
     try:
+        # Check license authorization
+        if not license_manager.is_authorized():
+            logger.error("License validation failed. Application cannot start.")
+            raise Exception("Invalid or expired license. Please contact support.")
+
+        license_status = license_manager.get_license_status()
+        logger.info(f"License status: {license_status['status']} ({license_status['type']})")
+
         # Initialize database and create superuser
         async with AsyncSessionLocal() as db:
             await init_db(db)
