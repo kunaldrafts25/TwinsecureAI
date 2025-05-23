@@ -128,3 +128,11 @@ TEST_PLAN*.md
 locustfile.py
 check_postgres.py
 run_load_test.py
+
+# Large binary files (download during setup)
+GeoLite2-City.mmdb
+
+# Temporary status files
+CLEANUP_COMPLETE.md
+INDIAN_PRICING_UPDATE_COMPLETE.md
+*_STATUS.md

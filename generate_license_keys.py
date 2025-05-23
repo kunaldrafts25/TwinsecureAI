@@ -144,6 +144,8 @@ def main():
     print("🔑 TwinSecure License Key Generator")
     print("=" * 50)
     print("Contact: kunalsingh2514@gmail.com")
+    print("Currency: Indian Rupees (₹)")
+    print("Governed by: Laws of India")
     print()
 
     # Generate demo keys
@@ -222,8 +224,15 @@ def main():
     print("     cd backend && python -m uvicorn app.main:app --reload")
     print()
 
+    print("💰 Indian Pricing (₹):")
+    print("  - Personal License: ₹8,299/year (~$99)")
+    print("  - Commercial License: ₹41,499/year (~$499)")
+    print("  - Enterprise License: ₹2,49,999/year (~$2,999)")
+    print()
+
     print("📧 For customer licenses, contact: kunalsingh2514@gmail.com")
     print(f"📊 Total keys generated: {len(generator.generated_keys)}")
+    print("🏛️ Governed by the laws of India")
 
 
 if __name__ == "__main__":

@@ -506,3 +506,43 @@ All API endpoints return standard error responses:
 - `404 Not Found`: Resource not found
 - `422 Unprocessable Entity`: Validation error
 - `500 Internal Server Error`: Server error
+
+## Licensing & Pricing
+
+### License Requirements
+
+TwinSecure requires a valid license key for production use. Set the license key as an environment variable:
+
+```bash
+export TWINSECURE_LICENSE_KEY="TS-YOUR-LICENSE-KEY"
+```
+
+### Trial Period
+
+- **Free Trial**: 7 days with limited features
+- **Features**: Basic API access, limited analytics
+- **Restrictions**: No ML features, no advanced analytics
+
+### Pricing (Indian Rupees)
+
+- **Personal License**: ₹8,299/year (~$99)
+  - Single developer use
+  - All API features included
+  - Email support
+
+- **Commercial License**: ₹41,499/year (~$499)
+  - Production deployment
+  - All API features included
+  - Priority support
+
+- **Enterprise License**: ₹2,49,999/year (~$2,999)
+  - Unlimited deployment
+  - All API features included
+  - Custom integrations
+  - Dedicated support
+
+### Contact
+
+For licensing inquiries: kunalsingh2514@gmail.com
+
+*Governed by the laws of India*

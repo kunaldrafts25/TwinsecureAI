@@ -413,7 +413,16 @@ This project is proprietary software. All rights reserved.
 
 This software and associated documentation files (the "Software") are proprietary and confidential. Unauthorized copying, distribution, modification, or use of this software, via any medium, is strictly prohibited without explicit written permission from the copyright holder.
 
-For licensing inquiries, please contact: [kunalsingh2514@gmail.com]
+For licensing inquiries, please contact: kunalsingh2514@gmail.com
+
+### Pricing (Indian Rupees)
+
+- **Free Trial**: 7 days (limited features)
+- **Personal License**: ₹8,299/year (~$99) - Single developer
+- **Commercial License**: ₹41,499/year (~$499) - Production use
+- **Enterprise License**: ₹2,49,999/year (~$2,999) - Unlimited deployment
+
+*Governed by the laws of India*
 
 ---
 
