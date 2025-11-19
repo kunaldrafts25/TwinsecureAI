@@ -34,12 +34,17 @@ wheels/
 # Environment and secrets
 .env
 .env.local
-.env.production
 .env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
 *.key
 *.pem
 *.p12
 *.pfx
+secrets.json
+credentials.json
 
 # Logs
 *.log
@@ -128,6 +133,8 @@ TEST_PLAN*.md
 locustfile.py
 check_postgres.py
 run_load_test.py
+test_db_connection.py
+setup_test.py
 
 # Large binary files (download during setup)
 GeoLite2-City.mmdb

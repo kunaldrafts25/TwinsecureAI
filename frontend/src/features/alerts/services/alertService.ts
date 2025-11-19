@@ -17,95 +17,44 @@ export const alertService = {
   // Get all alerts with optional filtering
   getAlerts: async (filters?: AlertFilters): Promise<Alert[]> => {
     try {
-      // In a real app, this would call the API
-      // return await apiRequest<Alert[]>({
-      //   method: 'GET',
-      //   url: '/alerts',
-      //   params: filters,
-      // });
+      // Build query parameters from filters
+      const params: Record<string, any> = {};
+      if (filters) {
+        if (filters.alert_type) params.alert_type = filters.alert_type;
+        if (filters.severity) params.severity = filters.severity;
+        if (filters.status) params.status = filters.status;
+        if (filters.source_ip) params.source_ip = filters.source_ip;
+        if (filters.honeypot_id) params.honeypot_id = filters.honeypot_id;
+        if (filters.date_from) params.date_from = filters.date_from;
+        if (filters.date_to) params.date_to = filters.date_to;
+      }
 
-      // Mock implementation with filtering
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          let filteredAlerts = [...mockAlerts];
-          
-          if (filters) {
-            if (filters.alert_type) {
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => alert.alert_type.toLowerCase().includes(filters.alert_type!.toLowerCase())
-              );
-            }
-            
-            if (filters.severity) {
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => alert.severity === filters.severity
-              );
-            }
-            
-            if (filters.status) {
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => alert.status === filters.status
-              );
-            }
-            
-            if (filters.source_ip) {
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => alert.source_ip.includes(filters.source_ip!)
-              );
-            }
-            
-            if (filters.honeypot_id) {
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => alert.honeypot_id === filters.honeypot_id
-              );
-            }
-            
-            if (filters.date_from) {
-              const fromDate = new Date(filters.date_from).getTime();
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => new Date(alert.created_at).getTime() >= fromDate
-              );
-            }
-            
-            if (filters.date_to) {
-              const toDate = new Date(filters.date_to).getTime();
-              filteredAlerts = filteredAlerts.filter(
-                (alert) => new Date(alert.created_at).getTime() <= toDate
-              );
-            }
-          }
-          
-          resolve(filteredAlerts);
-        }, 500);
-      });
+      return await apiRequest<Alert[]>({
+        method: 'GET',
+        url: '/alerts',
+        params,
+      }, mockAlerts); // Fallback to mock data on error
     } catch (error) {
       console.error('Get alerts error:', error);
-      throw error;
+      // Return mock data as fallback
+      return mockAlerts;
     }
   },
 
   // Get a single alert by ID
   getAlertById: async (id: string): Promise<Alert> => {
     try {
-      // In a real app, this would call the API
-      // return await apiRequest<Alert>({
-      //   method: 'GET',
-      //   url: `/alerts/${id}`,
-      // });
-
-      // Mock implementation
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const alert = mockAlerts.find((a) => a.id === id);
-          if (alert) {
-            resolve(alert);
-          } else {
-            reject(new Error('Alert not found'));
-          }
-        }, 300);
+      return await apiRequest<Alert>({
+        method: 'GET',
+        url: `/alerts/${id}`,
       });
     } catch (error) {
       console.error(`Get alert ${id} error:`, error);
+      // Try to find in mock data as fallback
+      const alert = mockAlerts.find((a) => a.id === id);
+      if (alert) {
+        return alert;
+      }
       throw error;
     }
   },
@@ -113,29 +62,10 @@ export const alertService = {
   // Update an alert
   updateAlert: async (id: string, data: Partial<Alert>): Promise<Alert> => {
     try {
-      // In a real app, this would call the API
-      // return await apiRequest<Alert>({
-      //   method: 'PATCH',
-      //   url: `/alerts/${id}`,
-      //   data,
-      // });
-
-      // Mock implementation
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const alertIndex = mockAlerts.findIndex((a) => a.id === id);
-          if (alertIndex !== -1) {
-            const updatedAlert = {
-              ...mockAlerts[alertIndex],
-              ...data,
-              updated_at: new Date().toISOString(),
-            };
-            mockAlerts[alertIndex] = updatedAlert;
-            resolve(updatedAlert);
-          } else {
-            reject(new Error('Alert not found'));
-          }
-        }, 300);
+      return await apiRequest<Alert>({
+        method: 'PATCH',
+        url: `/alerts/${id}`,
+        data,
       });
     } catch (error) {
       console.error(`Update alert ${id} error:`, error);
@@ -146,21 +76,10 @@ export const alertService = {
   // Create a new alert
   createAlert: async (data: Partial<Alert>): Promise<Alert> => {
     try {
-      // In a real app, this would call the API
-      // return await apiRequest<Alert>({
-      //   method: 'POST',
-      //   url: '/alerts',
-      //   data,
-      // });
-
-      // Mock implementation
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newAlert = generateMockAlerts(1)[0];
-          const mergedAlert = { ...newAlert, ...data };
-          mockAlerts.unshift(mergedAlert);
-          resolve(mergedAlert);
-        }, 300);
+      return await apiRequest<Alert>({
+        method: 'POST',
+        url: '/alerts',
+        data,
       });
     } catch (error) {
       console.error('Create alert error:', error);
@@ -171,23 +90,9 @@ export const alertService = {
   // Delete an alert
   deleteAlert: async (id: string): Promise<void> => {
     try {
-      // In a real app, this would call the API
-      // return await apiRequest<void>({
-      //   method: 'DELETE',
-      //   url: `/alerts/${id}`,
-      // });
-
-      // Mock implementation
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const alertIndex = mockAlerts.findIndex((a) => a.id === id);
-          if (alertIndex !== -1) {
-            mockAlerts.splice(alertIndex, 1);
-            resolve();
-          } else {
-            reject(new Error('Alert not found'));
-          }
-        }, 300);
+      await apiRequest<void>({
+        method: 'DELETE',
+        url: `/alerts/${id}`,
       });
     } catch (error) {
       console.error(`Delete alert ${id} error:`, error);

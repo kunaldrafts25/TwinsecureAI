@@ -114,17 +114,15 @@ install_dependencies() {
 setup_database() {
   echo -e "\e[33mSetting up the database...\e[0m"
   
-  # Check if PostgreSQL is running in Docker
-  PG_CONTAINER=$(docker ps -q -f "name=twinsecure_db")
-  
-  if [ -z "$PG_CONTAINER" ]; then
-    echo -e "\e[33mStarting PostgreSQL container...\e[0m"
-    docker-compose up -d db
-    
-    # Wait for PostgreSQL to start
-    echo -e "\e[33mWaiting for PostgreSQL to start...\e[0m"
-    sleep 10
-  fi
+  # SQLite is used by default - no Docker container needed
+  # If using PostgreSQL, uncomment the following lines:
+  # PG_CONTAINER=$(docker ps -q -f "name=twinsecure_db")
+  # if [ -z "$PG_CONTAINER" ]; then
+  #   echo -e "\e[33mStarting PostgreSQL container...\e[0m"
+  #   docker-compose up -d db
+  #   echo -e "\e[33mWaiting for PostgreSQL to start...\e[0m"
+  #   sleep 10
+  # fi
   
   # Run database migrations
   cd backend
@@ -157,12 +155,9 @@ if [ $PYTHON_INSTALLED -ne 0 ]; then
   exit 1
 fi
 
-if [ $DOCKER_INSTALLED -ne 0 ]; then
-  echo -e "\e[33mDocker is not installed. Database setup will be skipped.\e[0m"
-  SETUP_DB=false
-else
-  SETUP_DB=true
-fi
+# SQLite doesn't require Docker, so we can always set up the database
+# Docker is only needed for Redis and other services
+SETUP_DB=true
 
 # Create virtual environment
 create_virtualenv

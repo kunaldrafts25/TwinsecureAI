@@ -22,6 +22,13 @@ const BypassLogin: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Only allow bypass in development mode
+  const isDevMode = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_BYPASS === 'true';
+  
+  if (!isDevMode) {
+    return null; // Don't render in production
+  }
 
   // Function to create a fake authentication session
   const bypassLogin = () => {

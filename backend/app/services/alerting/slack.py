@@ -1,133 +1,188 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+Slack alerting channel implementation.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
 
 import httpx
-import requests
 
 from app.core.config import settings
+
+from .base import AlertChannel, AlertPayload
 
 logger = logging.getLogger(__name__)
 
 
-class SlackAlerter:
-    """Class for sending alerts to Slack."""
-
-    def __init__(self, webhook_url: str, channel: Optional[str] = None):
+class SlackChannel(AlertChannel):
+    """Alert channel for Slack webhook notifications."""
+    
+    def initialize(self) -> None:
+        """Initialize Slack channel and validate webhook URL."""
+        self.webhook_url = self.config.get("webhook_url") or settings.SLACK_WEBHOOK_URL
+        self.channel = self.config.get("channel")  # Optional channel override
+        
+        if not self.webhook_url:
+            logger.warning("Slack webhook URL not configured")
+            self.enabled = False
+    
+    async def send_alert(self, payload: AlertPayload) -> bool:
         """
-        Initialize the Slack alerter.
-
+        Send an alert to Slack via webhook using Block Kit.
+        
         Args:
-            webhook_url: Slack webhook URL
-            channel: Optional Slack channel to send messages to
-        """
-        self.webhook_url = webhook_url
-        self.channel = channel
-
-    async def send_alert(self, alert_data: Dict[str, Any]) -> bool:
-        """
-        Send an alert to Slack.
-
-        Args:
-            alert_data: Dictionary containing alert information
-
+            payload: The alert payload to send
+            
         Returns:
-            bool: True if the alert was sent successfully, False otherwise
+            True if successful, False otherwise
         """
-        try:
-            # Extract alert information
-            title = alert_data.get("title", "Security Alert")
-            severity = alert_data.get("severity", "MEDIUM")
-            description = alert_data.get("description", "")
-
-            # Create message blocks
-            blocks = [
-                {
-                    "type": "header",
-                    "text": {
-                        "type": "plain_text",
-                        "text": f"{severity} Alert: {title}",
-                        "emoji": True,
-                    },
-                },
-                {"type": "section", "text": {"type": "mrkdwn", "text": description}},
-            ]
-
-            # Add alert ID if available
-            if "id" in alert_data:
-                blocks.append(
-                    {
-                        "type": "context",
-                        "elements": [
-                            {
-                                "type": "mrkdwn",
-                                "text": f"*Alert ID:* {alert_data['id']}",
-                            }
-                        ],
-                    }
-                )
-
-            # Create payload
-            payload = {"blocks": blocks}
-
-            # Add channel if specified
-            if self.channel:
-                payload["channel"] = self.channel
-
-            # Send message
-            async with httpx.AsyncClient() as client:
-                response = await client.post(self.webhook_url, json=payload)
-                response.raise_for_status()
-
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send Slack alert: {str(e)}")
+        if not self.enabled:
+            logger.debug("Slack channel is disabled, skipping")
             return False
-
-
-def send_slack_message(message: str, webhook_url: str) -> Optional[requests.Response]:
-    """
-    Sends a message to a Slack channel using an incoming webhook.
-
-    Args:
-        message: The text content of the message to send.
-        webhook_url: The Slack incoming webhook URL.
-
-    Returns:
-        The requests.Response object if the request was successful,
-        None otherwise.
-    """
-    # Prepare the payload for the Slack message
-    payload = {"text": message}
-
-    try:
-        # Send the HTTP POST request to the Slack webhook URL
-        response = requests.post(webhook_url, json=payload)
-
-        # Raise an exception for bad status codes (4xx or 5xx)
-        response.raise_for_status()
-
-        logger.info(
-            f"Slack message sent successfully. Status code: {response.status_code}"
-        )
-        return response
-
-    except requests.exceptions.RequestException as e:
-        # Handle any errors that occur during the request
-        logger.error(f"Failed to send Slack message: {e}")
-        return None
-    except Exception as e:
-        # Catch any other unexpected errors
-        logger.error(f"An unexpected error occurred while sending Slack message: {e}")
-        return None
+        
+        try:
+            blocks = self._create_blocks(payload)
+            slack_payload = {"blocks": blocks}
+            
+            # Add channel override if configured
+            if self.channel:
+                slack_payload["channel"] = self.channel
+            
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(self.webhook_url, json=slack_payload)
+                
+                if not (200 <= response.status_code < 300):
+                    logger.error(
+                        f"Slack webhook failed with status {response.status_code}: "
+                        f"{response.text}"
+                    )
+                    return False
+            
+            return True
+        
+        except httpx.RequestError as e:
+            logger.error(f"Failed to connect to Slack webhook: {e}")
+            return False
+        
+        except Exception as e:
+            logger.exception(f"Unexpected error sending Slack alert: {e}")
+            return False
+    
+    def _create_blocks(self, payload: AlertPayload) -> list[dict]:
+        """
+        Create Slack Block Kit blocks from the alert payload.
+        
+        Args:
+            payload: The alert payload
+            
+        Returns:
+            List of Slack blocks
+        """
+        blocks = []
+        
+        # Header block with severity and title
+        severity_prefix = self._get_severity_prefix(payload.severity)
+        blocks.append({
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f"{severity_prefix} {payload.title}"
+            }
+        })
+        
+        # Main message section
+        message_text = payload.message
+        if payload.source_ip:
+            message_text += f"\n\n*Source IP:* `{payload.source_ip}`"
+        if payload.alert_type:
+            message_text += f"\n*Type:* {payload.alert_type}"
+        
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": message_text
+            }
+        })
+        
+        # Additional data fields
+        if payload.additional_data:
+            fields = []
+            
+            # Abuse score
+            if "abuse_score" in payload.additional_data:
+                score = payload.additional_data["abuse_score"]
+                if score is not None:
+                    fields.append({
+                        "type": "mrkdwn",
+                        "text": f"*Abuse Score:*\n{score}/100"
+                    })
+            
+            # Country
+            if "ip_info" in payload.additional_data:
+                ip_info = payload.additional_data["ip_info"]
+                if ip_info and "country" in ip_info:
+                    fields.append({
+                        "type": "mrkdwn",
+                        "text": f"*Country:*\n{ip_info['country']}"
+                    })
+            
+            # Status
+            if "status" in payload.additional_data:
+                fields.append({
+                    "type": "mrkdwn",
+                    "text": f"*Status:*\n{str(payload.additional_data['status']).upper()}"
+                })
+            
+            # Add fields section if any fields exist
+            if fields:
+                blocks.append({
+                    "type": "section",
+                    "fields": fields[:10]  # Slack limit: 10 fields
+                })
+            
+            # Context with alert ID and timestamp
+            context_elements = []
+            
+            if "id" in payload.additional_data:
+                context_elements.append({
+                    "type": "mrkdwn",
+                    "text": f"*Alert ID:* {payload.additional_data['id']}"
+                })
+            
+            if "triggered_at" in payload.additional_data:
+                context_elements.append({
+                    "type": "mrkdwn",
+                    "text": f"*Time:* {payload.additional_data['triggered_at']}"
+                })
+            
+            if context_elements:
+                blocks.append({
+                    "type": "context",
+                    "elements": context_elements
+                })
+        
+        return blocks
+    
+    def _get_severity_prefix(self, severity: str) -> str:
+        """
+        Get severity prefix for Slack message.
+        
+        Args:
+            severity: Severity level string
+            
+        Returns:
+            Severity indicator with icon
+        """
+        severity_prefixes = {
+            "critical": "[CRITICAL]",
+            "high": "[HIGH]",
+            "medium": "[MEDIUM]",
+            "low": "[LOW]",
+            "info": "[INFO]",
+        }
+        
+        return severity_prefixes.get(severity.lower(), "[ALERT]")

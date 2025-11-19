@@ -107,6 +107,19 @@ export interface Report {
   download_url: string;
 }
 
+export interface ReportFilters {
+  report_type?: string;
+  date_from?: string;
+  date_to?: string;
+}
+
+export interface ReportGenerationParams {
+  report_type: string;
+  start_date?: string;
+  end_date?: string;
+  include_charts?: boolean;
+}
+
 // System metrics
 export interface SystemHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -167,6 +180,136 @@ export interface DigitalTwinStatus {
   honeypots: number;
   engagements: number;
   last_engagement?: string;
+}
+
+// Digital Twin types
+export interface DigitalTwin {
+  id: string;
+  name: string;
+  description?: string;
+  twin_type: string;
+  ip_address?: string;
+  hostname?: string;
+  network_segment?: string;
+  exposed_ports?: number[];
+  services?: string[];
+  is_honeypot: boolean;
+  honeypot_type?: string;
+  vulnerability_level?: string;
+  configuration?: Record<string, any>;
+  status: string;
+  engagement_count: number;
+  total_attacks_detected: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface DigitalTwinCreate {
+  name: string;
+  description?: string;
+  twin_type: string;
+  ip_address?: string;
+  hostname?: string;
+  network_segment?: string;
+  exposed_ports?: number[];
+  services?: string[];
+  is_honeypot?: boolean;
+  honeypot_type?: string;
+  vulnerability_level?: string;
+  configuration?: Record<string, any>;
+}
+
+export interface DigitalTwinUpdate {
+  name?: string;
+  description?: string;
+  twin_type?: string;
+  ip_address?: string;
+  hostname?: string;
+  network_segment?: string;
+  exposed_ports?: number[];
+  services?: string[];
+  is_honeypot?: boolean;
+  honeypot_type?: string;
+  vulnerability_level?: string;
+  status?: string;
+  configuration?: Record<string, any>;
+}
+
+export interface NetworkTopology {
+  id: string;
+  source_twin_id: string;
+  destination_twin_id: string;
+  connection_type?: string;
+  protocol?: string;
+  ports?: number[];
+  created_at: string;
+}
+
+export interface TwinEngagement {
+  id: string;
+  twin_id: string;
+  attacker_ip: string;
+  engagement_type: string;
+  severity: string;
+  attack_vector?: string;
+  payload?: Record<string, any>;
+  started_at: string;
+  ended_at?: string;
+}
+
+// Honeypot data types
+export interface HoneypotData {
+  timestamp: string;
+  sourceIp: string; // Backend accepts both sourceIp and source_ip
+  source_ip?: string; // Alternative format
+  requestId?: string;
+  request_id?: string; // Alternative format
+  httpMethod?: string;
+  http_method?: string; // Alternative format
+  uri?: string;
+  headers?: Record<string, any>;
+  queryString?: string;
+  query_string?: string; // Alternative format
+  body?: string;
+  action?: string; // WAF action: ALLOW, BLOCK
+  waf_action?: string; // Alternative format
+  ruleGroupList?: any[];
+  rule_group_list?: any[]; // Alternative format
+  // Legacy fields for backward compatibility
+  destination_ip?: string;
+  protocol?: string;
+  port?: number;
+  url?: string;
+  method?: string;
+  user_agent?: string;
+  payload?: string;
+  request_count?: number;
+  response_time_ms?: number;
+  status_code?: number;
+  bytes_sent?: number;
+  bytes_received?: number;
+  duration_seconds?: number;
+  honeypot_id?: string;
+  digital_twin_id?: string;
+}
+
+// User management types
+export interface UserCreate {
+  email: string;
+  password: string;
+  full_name: string;
+  role?: UserRole;
+  is_active?: boolean;
+  is_superuser?: boolean;
+}
+
+export interface UserUpdate {
+  email?: string;
+  password?: string;
+  full_name?: string;
+  role?: UserRole;
+  is_active?: boolean;
+  is_superuser?: boolean;
 }
 
 // Dashboard filter types

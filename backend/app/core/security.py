@@ -1,16 +1,13 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+JWT token creation and validation utilities.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import UUID
 
 from jose import JWTError, jwt
@@ -19,59 +16,68 @@ from app.core.config import logger, settings
 from app.core.password import get_password_hash, verify_password
 from app.schemas import TokenPayload
 
-# JWT settings
-ALGORITHM = settings.SECURITY__ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES
-REFRESH_TOKEN_EXPIRE_DAYS = settings.SECURITY__REFRESH_TOKEN_EXPIRE_DAYS
-SECRET_KEY = settings.SECURITY__SECRET_KEY.get_secret_value()
+# JWT settings from nested config
+ALGORITHM = settings.security.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.security.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = settings.security.REFRESH_TOKEN_EXPIRE_DAYS
+SECRET_KEY = settings.security.SECRET_KEY.get_secret_value()
 
 
 def create_access_token(
-    subject: Union[str, UUID, Any], expires_delta: Optional[timedelta] = None
+    subject: str | UUID | Any,
+    expires_delta: timedelta | None = None
 ) -> str:
     """
-    Creates a JWT access token.
-
+    Create a JWT access token.
+    
     Args:
-        subject: The subject of the token (typically user ID).
-        expires_delta: Optional timedelta for token expiry. Defaults to setting.
-
+        subject: The token subject (typically user ID)
+        expires_delta: Optional custom expiration time
+    
     Returns:
-        The encoded JWT token string.
+        Encoded JWT token string
     """
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.SECURITY__ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-
-    to_encode = {"exp": expire, "sub": str(subject)}  # Ensure subject is a string
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    
     logger.debug(f"Created access token for subject {subject} expiring at {expire}")
     return encoded_jwt
 
 
-def decode_token(token: str) -> Optional[TokenPayload]:
+def decode_token(token: str) -> TokenPayload | None:
     """
-    Decodes a JWT token and returns the payload.
-
+    Decode and validate a JWT token.
+    
     Args:
-        token: The encoded JWT token string.
-
+        token: The encoded JWT token string
+    
     Returns:
-        The TokenPayload schema instance or None if decoding fails or token is invalid/expired.
+        TokenPayload instance or None if invalid/expired
     """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # Explicitly create TokenPayload to handle potential missing 'sub' or validate type
         token_data = TokenPayload(sub=payload.get("sub"))
-        # Optional: Add more validation here, e.g., check 'exp' claim validity more strictly if needed
+        
         logger.debug(f"Token decoded successfully for subject: {token_data.sub}")
         return token_data
+        
     except JWTError as e:
         logger.warning(f"JWT Error decoding token: {e}")
         return None
-    except Exception as e:  # Catch potential Pydantic validation errors or other issues
+    except Exception as e:
         logger.error(f"Error processing token payload: {e}")
         return None
+
+
+# Re-export password functions for convenience
+__all__ = [
+    "create_access_token",
+    "decode_token",
+    "get_password_hash",
+    "verify_password"
+]

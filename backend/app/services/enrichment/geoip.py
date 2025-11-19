@@ -1,23 +1,19 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+GeoIP location lookup service using MaxMind database.
 """
 
 import asyncio
 import logging
 import os
-from functools import lru_cache  # Add cache for performance
-from typing import Any, Dict, Optional
+from functools import lru_cache
 
 import geoip2.database
 import geoip2.errors
-import requests
+import httpx
 
 from app.core.config import settings
 
@@ -25,170 +21,211 @@ logger = logging.getLogger(__name__)
 
 
 class GeoIPClient:
-    """Client for IP geolocation lookups."""
-
-    def __init__(self, api_key: Optional[str] = None, db_path: Optional[str] = None):
+    """
+    Client for IP geolocation lookups using MaxMind GeoIP2 database.
+    Falls back to ipapi.co if local database is unavailable.
+    """
+    
+    def __init__(self, db_path: str | None = None):
         """
         Initialize the GeoIP client.
-
+        
         Args:
-            api_key: API key for online geolocation service
-            db_path: Path to local MaxMind database file
+            db_path: Path to MaxMind GeoIP2 database file
         """
-        self.api_key = api_key
-        self.db_path = db_path
+        self.db_path = db_path or self._get_db_path()
         self.reader = None
-
-        # Initialize database reader if path is provided
-        if db_path and os.path.exists(db_path):
+        
+        # Initialize database reader if path exists
+        if self.db_path and os.path.exists(self.db_path):
             try:
-                self.reader = geoip2.database.Reader(db_path)
-                logger.info(f"GeoIP database loaded from {db_path}")
+                self.reader = geoip2.database.Reader(
+                    self.db_path,
+                    mode=geoip2.database.MODE_AUTO
+                )
+                logger.info(f"GeoIP database loaded from {self.db_path}")
             except Exception as e:
-                logger.error(f"Failed to load GeoIP database: {str(e)}")
-
-    async def lookup_ip(self, ip_address: str) -> Optional[Dict[str, Any]]:
+                logger.error(f"Failed to load GeoIP database: {e}")
+        else:
+            logger.warning("GeoIP database not configured or file not found")
+    
+    def _get_db_path(self) -> str | None:
+        """Get MaxMind database path from settings or environment."""
+        # Check settings first
+        if hasattr(settings, "MAXMIND_DB_PATH") and settings.MAXMIND_DB_PATH:
+            return str(settings.MAXMIND_DB_PATH)
+        
+        # Check nested config
+        if hasattr(settings, "geoip2") and hasattr(settings.geoip2, "db_path"):
+            return settings.geoip2.db_path
+        
+        # Check environment variable
+        return os.getenv("MAXMIND_DB_PATH")
+    
+    async def lookup_ip(self, ip_address: str) -> dict[str, any] | None:
         """
         Look up geolocation information for an IP address.
-
+        Tries local database first, falls back to online API.
+        
         Args:
             ip_address: IP address to look up
-
+            
         Returns:
-            Dict containing geolocation information or None if an error occurs
+            Dictionary containing geolocation data or None
         """
-        # Try local database first if available
+        # Try local database first
         if self.reader:
-            try:
-                result = await self._lookup_ip_local(ip_address)
-                if result:
-                    return result
-            except Exception as e:
-                logger.error(
-                    f"Error looking up IP {ip_address} in local database: {str(e)}"
-                )
-
-        # Fall back to online API if API key is provided
-        if self.api_key:
-            try:
-                return await self._lookup_ip_online(ip_address)
-            except Exception as e:
-                logger.error(
-                    f"Error looking up IP {ip_address} with online API: {str(e)}"
-                )
-
-        return None
-
-    async def _lookup_ip_local(self, ip_address: str) -> Optional[Dict[str, Any]]:
+            result = await self._lookup_local(ip_address)
+            if result:
+                return result
+        
+        # Fall back to online API
+        return await self._lookup_online(ip_address)
+    
+    async def _lookup_local(self, ip_address: str) -> dict[str, any] | None:
         """
-        Look up IP address in local MaxMind database.
-
+        Look up IP in local MaxMind database.
+        
         Args:
             ip_address: IP address to look up
-
+            
         Returns:
-            Dict containing geolocation information or None if an error occurs
+            Dictionary with geolocation data or None
         """
         if not self.reader:
             return None
-
+        
         try:
-            # Run the blocking database lookup in a thread pool
+            # Run blocking database lookup in thread pool
             loop = asyncio.get_running_loop()
-            response = await loop.run_in_executor(None, self.reader.city, ip_address)
-
-            # Extract relevant information
-            return {
+            response = await loop.run_in_executor(
+                None,
+                self.reader.city,
+                ip_address
+            )
+            
+            # Build response dict
+            data = {
                 "ip": ip_address,
-                "country_code": response.country.iso_code,
-                "country_name": response.country.name,
+                "country_iso": response.country.iso_code,
+                "country": response.country.name,
                 "city": response.city.name,
+                "postal_code": response.postal.code,
                 "latitude": response.location.latitude,
                 "longitude": response.location.longitude,
                 "timezone": response.location.time_zone,
             }
+            
+            # Filter out None values
+            return {k: v for k, v in data.items() if v is not None}
+        
         except geoip2.errors.AddressNotFoundError:
             logger.debug(f"IP {ip_address} not found in GeoIP database")
             return None
-        except Exception as e:
-            logger.error(
-                f"Error looking up IP {ip_address} in GeoIP database: {str(e)}"
-            )
+        
+        except ValueError as e:
+            logger.warning(f"Invalid IP address {ip_address}: {e}")
             return None
-
-    async def _lookup_ip_online(self, ip_address: str) -> Optional[Dict[str, Any]]:
+        
+        except Exception as e:
+            logger.error(f"Error looking up {ip_address} in GeoIP database: {e}")
+            return None
+    
+    async def _lookup_online(self, ip_address: str) -> dict[str, any] | None:
         """
-        Look up IP address using an online API.
-
+        Look up IP using ipapi.co free API as fallback.
+        
         Args:
             ip_address: IP address to look up
-
+            
         Returns:
-            Dict containing geolocation information or None if an error occurs
+            Dictionary with geolocation data or None
         """
         try:
-            # Use a free IP geolocation API (replace with your preferred service)
             url = f"https://ipapi.co/{ip_address}/json/"
-
-            # Run the blocking HTTP request in a thread pool
-            loop = asyncio.get_running_loop()
-            response = await loop.run_in_executor(
-                None, lambda: requests.get(url, timeout=5)
-            )
-
-            response.raise_for_status()
-            data = response.json()
-
-            # Extract relevant information
-            return {
-                "ip": ip_address,
-                "country_code": data.get("country_code"),
-                "country_name": data.get("country_name"),
-                "city": data.get("city"),
-                "latitude": data.get("latitude"),
-                "longitude": data.get("longitude"),
-                "timezone": data.get("timezone"),
-            }
-        except Exception as e:
-            logger.error(f"Error looking up IP {ip_address} with online API: {str(e)}")
+            
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(url)
+                
+                # Handle rate limiting
+                if response.status_code == 429:
+                    logger.warning(f"ipapi.co rate limit exceeded for {ip_address}")
+                    return None
+                
+                response.raise_for_status()
+                data = response.json()
+                
+                # Check for error response
+                if "error" in data:
+                    logger.warning(
+                        f"ipapi.co returned error for {ip_address}: {data.get('reason')}"
+                    )
+                    return None
+                
+                # Normalize field names to match local format
+                return {
+                    "ip": ip_address,
+                    "country_iso": data.get("country_code"),
+                    "country": data.get("country_name"),
+                    "city": data.get("city"),
+                    "postal_code": data.get("postal"),
+                    "latitude": data.get("latitude"),
+                    "longitude": data.get("longitude"),
+                    "timezone": data.get("timezone"),
+                }
+        
+        except httpx.TimeoutException:
+            logger.error(f"Timeout looking up {ip_address} with ipapi.co")
             return None
-
-
-# --- Global GeoIP Reader ---
-# Initialize the reader once when the module is loaded.
-geoip_reader = None
-if settings.MAXMIND_DB_PATH:
-    if os.path.exists(settings.MAXMIND_DB_PATH):
-        try:
-            # MODE_AUTO tries MMAP_EXT, then MMAP, then MEMORY
-            geoip_reader = geoip2.database.Reader(
-                settings.MAXMIND_DB_PATH, mode=geoip2.database.MODE_AUTO
-            )
-            logger.info(
-                f"GeoIP2 database loaded successfully from: {settings.MAXMIND_DB_PATH}"
-            )
-        except Exception as e:
+        
+        except httpx.HTTPStatusError as e:
             logger.error(
-                f"Failed to load GeoIP2 database from {settings.MAXMIND_DB_PATH}: {e}"
+                f"HTTP error {e.response.status_code} looking up {ip_address}: "
+                f"{e.response.text}"
             )
-            geoip_reader = None
-    else:
-        logger.error(
-            f"GeoIP2 database file not found at configured path: {settings.MAXMIND_DB_PATH}"
-        )
-else:
-    logger.warning(
-        "MaxMind DB path (MAXMIND_DB_PATH) not configured. GeoIP lookups disabled."
-    )
+            return None
+        
+        except Exception as e:
+            logger.error(f"Error looking up {ip_address} with ipapi.co: {e}")
+            return None
+    
+    def close(self) -> None:
+        """Close the GeoIP database reader."""
+        if self.reader:
+            try:
+                self.reader.close()
+                logger.info("GeoIP database reader closed")
+            except Exception as e:
+                logger.error(f"Error closing GeoIP reader: {e}")
+            finally:
+                self.reader = None
 
 
-@lru_cache(maxsize=1024)  # Cache recent lookups
-def _get_geoip_data_sync(ip_address: str) -> Optional[Dict[str, Any]]:
-    """Synchronous helper for GeoIP lookup to allow caching."""
-    if not geoip_reader:
+# Global singleton instance
+_geoip_client: GeoIPClient | None = None
+
+
+def get_geoip_client() -> GeoIPClient:
+    """Get or create the global GeoIP client instance."""
+    global _geoip_client
+    
+    if _geoip_client is None:
+        _geoip_client = GeoIPClient()
+    
+    return _geoip_client
+
+
+@lru_cache(maxsize=1024)
+def _lookup_sync(ip_address: str) -> dict[str, any] | None:
+    """Cached synchronous GeoIP lookup (for use with thread pool)."""
+    client = get_geoip_client()
+    
+    if not client.reader:
         return None
+    
     try:
-        response = geoip_reader.city(ip_address)
+        response = client.reader.city(ip_address)
+        
         data = {
             "country_iso": response.country.iso_code,
             "country": response.country.name,
@@ -197,69 +234,39 @@ def _get_geoip_data_sync(ip_address: str) -> Optional[Dict[str, Any]]:
             "latitude": response.location.latitude,
             "longitude": response.location.longitude,
             "timezone": response.location.time_zone,
-            # Add ASN if using City or Enterprise DB that includes it
-            # "asn": response.traits.autonomous_system_number,
-            # "asn_org": response.traits.autonomous_system_organization,
         }
-        geo_info = {k: v for k, v in data.items() if v is not None}
-        logger.debug(
-            f"GeoIP lookup successful for {ip_address}: {geo_info.get('city')}, {geo_info.get('country')}"
-        )
-        return geo_info
+        
+        return {k: v for k, v in data.items() if v is not None}
+    
     except geoip2.errors.AddressNotFoundError:
-        logger.debug(
-            f"GeoIP lookup failed for {ip_address}: Address not found in database."
-        )
         return None
-    except ValueError as e:
-        logger.warning(
-            f"GeoIP lookup failed for {ip_address}: Invalid IP address format? Error: {e}"
-        )
-        return None
-    except Exception as e:
-        # Log less severe errors less frequently if needed
-        logger.error(
-            f"An unexpected error occurred during GeoIP lookup for {ip_address}: {e}"
-        )
+    
+    except Exception:
         return None
 
 
-async def get_geoip_data(ip_address: str) -> Optional[Dict[str, Any]]:
+async def get_ip_location(ip_address: str) -> dict[str, any] | None:
     """
-    Performs a GeoIP lookup using the loaded MaxMind DB, running the sync lookup in a thread.
-
+    Convenience function for GeoIP lookup (cached).
+    
     Args:
-        ip_address: The IP address string to look up.
-
+        ip_address: IP address to look up
+        
     Returns:
-        A dictionary containing GeoIP data or None if lookup fails.
+        Dictionary containing geolocation data or None
     """
-    if not geoip_reader:
-        # logger.debug("GeoIP reader not available. Skipping GeoIP lookup.")
-        return None
-    try:
-        # Run the synchronous, cached lookup in a thread pool
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, _get_geoip_data_sync, ip_address)
-        return result
-    except Exception as e:
-        # This catches errors during the async execution itself, not the sync function errors
-        logger.error(f"Error running GeoIP lookup in executor for {ip_address}: {e}")
-        return None
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _lookup_sync, ip_address)
 
 
-def close_geoip_reader():
-    """Closes the GeoIP database reader if it's open."""
-    global geoip_reader
-    if geoip_reader:
-        try:
-            geoip_reader.close()
-            logger.info("GeoIP database reader closed.")
-        except Exception as e:
-            logger.error(f"Error closing GeoIP reader: {e}")
-        geoip_reader = None
+def close_geoip_reader() -> None:
+    """Close the global GeoIP client (call on app shutdown)."""
+    global _geoip_client
+    
+    if _geoip_client:
+        _geoip_client.close()
+        _geoip_client = None
 
 
-# Ensure the close function is called on application shutdown
-# Add `from app.services.enrichment.geoip import close_geoip_reader` to main.py
-# and call `close_geoip_reader()` in the shutdown event handler.
+# Backward compatibility exports
+geoip_reader = get_geoip_client()

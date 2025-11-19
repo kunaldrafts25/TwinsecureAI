@@ -1,18 +1,17 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
-"""
-
-"""
 Middleware package for TwinSecure.
 """
 
+from app.middleware.cache_middleware import CacheMiddleware
 from app.middleware.rate_limiter import RateLimiterMiddleware
+from app.middleware.security_middleware import SecurityHeadersMiddleware
 
-__all__ = ["RateLimiterMiddleware"]
+__all__ = [
+    "CacheMiddleware",
+    "RateLimiterMiddleware",
+    "SecurityHeadersMiddleware",
+]

@@ -14,10 +14,11 @@ For licensing inquiries: kunalsingh2514@gmail.com
 from .alerts import router as alerts
 from .auth import router as auth
 from .dashboard import router as dashboard
+from .digital_twin import router as digital_twin
 from .honeypot import router as honeypot
 from .reports import router as reports
 from .system import router as system
-from .users import users
+from .users import router as users
 
 # List all modules in __all__ for better imports
-__all__ = ["auth", "users", "alerts", "reports", "honeypot", "system", "dashboard"]
+__all__ = ["auth", "users", "alerts", "reports", "honeypot", "digital_twin", "system", "dashboard"]

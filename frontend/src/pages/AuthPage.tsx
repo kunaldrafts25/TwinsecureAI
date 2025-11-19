@@ -32,8 +32,8 @@ const AuthPage: React.FC = () => {
     formState: { errors },
   } = useForm<LoginRequest>({
     defaultValues: {
-      email: 'admin@finguard.com', // Pre-filled for demo purposes - matches FIRST_SUPERUSER in docker-compose.yml
-      password: '123456789', // Pre-filled for demo purposes - matches FIRST_SUPERUSER_PASSWORD in docker-compose.yml
+      email: import.meta.env.VITE_DEMO_EMAIL || '',
+      password: '',
     },
   });
 

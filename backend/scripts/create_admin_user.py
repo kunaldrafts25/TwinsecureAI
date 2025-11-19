@@ -1,158 +1,235 @@
+# -*- coding: utf-8 -*-
 """
 TwinSecure - Advanced Cybersecurity Platform
-Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
+Copyright (c) 2024 TwinSecure. All rights reserved.
 
-For licensing inquiries: kunalsingh2514@gmail.com
-"""
-
-"""
 Script to create an admin user directly in the database.
-This bypasses the normal application flow to help troubleshoot login issues.
-"""
-import asyncio
-import sys
-import os
+Useful for initial setup or troubleshooting login issues.
 
-# Add the parent directory to the path so we can import app modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+Usage:
+    export ADMIN_USER_PASSWORD="your_secure_password"
+    python scripts/create_admin_user.py
+"""
+
+import asyncio
+import os
+import sys
+import uuid
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
-from app.db.session import engine, AsyncSessionLocal
+
+from app.core.config import logger, settings
 from app.core.password import get_password_hash
-from app.core.config import settings
-from app.core.enums import UserRole, UserStatus
-import uuid
+from app.db.session import AsyncSessionLocal, engine
 
-async def check_database_connection():
-    """Check if we can connect to the database"""
+
+async def check_database_connection() -> bool:
+    """Check if database connection is working."""
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT 1"))
-            print("Database connection successful!")
+            await conn.execute(text("SELECT 1"))
+            print("*** Database connection successful")
             return True
+    
     except Exception as e:
-        print(f"Database connection failed: {e}")
+        print(f"*** Database connection failed: {e}")
         return False
 
-async def check_users_table():
-    """Check if the users table exists and has the expected structure"""
+
+async def check_users_table() -> bool:
+    """Check if users table exists with proper structure."""
     try:
+        db_url = str(settings.database.DATABASE_URL)
+        is_sqlite = db_url.startswith("sqlite")
+        
         async with engine.connect() as conn:
-            # Check if the users table exists
-            result = await conn.execute(text(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')"
-            ))
-            exists = result.scalar()
-            if not exists:
-                print("The 'users' table does not exist!")
+            # Check if users table exists (different syntax for SQLite vs PostgreSQL)
+            if is_sqlite:
+                # SQLite uses sqlite_master - use a clean, separate query
+                users_query = text(
+                    "SELECT EXISTS ("
+                    "SELECT 1 FROM sqlite_master "
+                    "WHERE type='table' AND name='users'"
+                    ")"
+                )
+                result = await conn.execute(users_query)
+            else:
+                # PostgreSQL uses information_schema - use a clean, separate query
+                users_query = text(
+                    "SELECT EXISTS ("
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_name = 'users'"
+                    ")"
+                )
+                result = await conn.execute(users_query)
+            
+            users_exists = result.scalar()
+            
+            if not users_exists:
+                print("*** The 'users' table does not exist!")
+                print("  Run 'python scripts/setup_database.py' first")
                 return False
-
-            # Check if the users_admin partition exists
-            result = await conn.execute(text(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users_admin')"
-            ))
-            admin_partition_exists = result.scalar()
-            if not admin_partition_exists:
-                print("The 'users_admin' partition does not exist!")
-                return False
-
-            print("Users table and admin partition exist.")
+            
+            # Check if users_admin partition exists (PostgreSQL only)
+            # Use a separate, explicit check to avoid query concatenation issues
+            if not is_sqlite:
+                # PostgreSQL partition check - use a completely separate query
+                partition_query = text(
+                    "SELECT EXISTS ("
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_name = 'users_admin'"
+                    ")"
+                )
+                partition_result = await conn.execute(partition_query)
+                partition_exists = partition_result.scalar()
+                
+                if not partition_exists:
+                    print("*** The 'users_admin' partition does not exist")
+                    return False
+                print("*** Users table and admin partition exist")
+            else:
+                print("*** Users table exists (SQLite - no partitions needed)")
+            
             return True
+    
     except Exception as e:
-        print(f"Error checking users table: {e}")
+        print(f"*** Error checking users table: {e}")
+        logger.error(f"Error checking users table: {e}", exc_info=True)
         return False
 
-async def create_admin_partition():
-    """Create the admin partition if it doesn't exist"""
+
+async def create_admin_partition() -> bool:
+    """Create the admin partition if it doesn't exist (PostgreSQL only)."""
+    db_url = settings.database.DATABASE_URL
+    
+    # SQLite doesn't support table partitioning
+    if db_url.startswith("sqlite"):
+        print("*** SQLite doesn't support partitions - skipping")
+        return True
+    
     try:
-        async with engine.connect() as conn:
+        async with engine.begin() as conn:
             await conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS users_admin PARTITION OF users
                 FOR VALUES IN ('ADMIN');
             """))
-            await conn.commit()
-            print("Admin partition created or already exists.")
+            
+            print("*** Admin partition created or already exists")
             return True
+    
     except Exception as e:
-        print(f"Error creating admin partition: {e}")
+        print(f"*** Error creating admin partition: {e}")
         return False
 
-async def create_admin_user():
-    """Create an admin user directly in the database"""
+
+async def create_admin_user() -> bool:
+    """Create an admin user in the database."""
     try:
-        # First check if the user already exists
+        # Get admin password from environment
+        admin_password = os.getenv("ADMIN_USER_PASSWORD")
+        
+        if not admin_password:
+            print("\n*** ERROR: ADMIN_USER_PASSWORD environment variable not set!")
+            print("\nUsage:")
+            print("  export ADMIN_USER_PASSWORD='your_secure_password'")
+            print("  python scripts/create_admin_user.py")
+            return False
+
+        if len(admin_password.encode("utf-8")) > 72:
+            print("*** WARNING: ADMIN_USER_PASSWORD longer than 72 bytes. Truncating for bcrypt compatibility.")
+            admin_password = admin_password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+        
         async with AsyncSessionLocal() as session:
+            # Check if admin user already exists
             result = await session.execute(text(
-                "SELECT COUNT(*) FROM users WHERE email = :email"
-            ), {"email": "admin@finguard.com"})
-            count = result.scalar()
-
-            if count > 0:
-                print(f"User with email admin@finguard.com already exists.")
+                "SELECT id FROM users WHERE email = 'admin@twinsecure.local'"
+            ))
+            existing_user = result.scalar_one_or_none()
+            
+            if existing_user:
+                print("*** Admin user already exists!")
+                print(f"  User ID: {existing_user}")
                 return True
-
-            # Create the user
+            
+            # Create new admin user
             user_id = uuid.uuid4()
-            hashed_password = get_password_hash("123456789")
-
+            hashed_password = get_password_hash(admin_password)
+            
+            # Insert admin user
             await session.execute(text("""
                 INSERT INTO users (
                     id, email, hashed_password, full_name, role, status,
-                    is_active, is_superuser, failed_login_attempts,
-                    preferences, notification_settings
+                    is_active, is_superuser, created_at
                 ) VALUES (
                     :id, :email, :hashed_password, :full_name, :role, :status,
-                    :is_active, :is_superuser, :failed_login_attempts,
-                    :preferences, :notification_settings
+                    :is_active, :is_superuser, datetime('now')
                 )
             """), {
-                "id": user_id,
-                "email": "admin@finguard.com",
+                "id": str(user_id),
+                "email": "admin@twinsecure.local",
                 "hashed_password": hashed_password,
-                "full_name": "Admin User",
+                "full_name": "System Administrator",
                 "role": "ADMIN",
                 "status": "ACTIVE",
                 "is_active": True,
-                "is_superuser": True,
-                "failed_login_attempts": 0,
-                "preferences": "{}",
-                "notification_settings": '{"email": true, "slack": false, "discord": false}'
+                "is_superuser": True
             })
-
+            
             await session.commit()
-            print(f"Admin user created successfully with email: admin@finguard.com")
-            print(f"Password: 123456789")
+            
+            print(f"\n*** Admin user created successfully!")
+            print(f"  Email: admin@twinsecure.local")
+            print(f"  User ID: {user_id}")
             return True
+    
     except Exception as e:
-        print(f"Error creating admin user: {e}")
+        print(f"*** Error creating admin user: {e}")
+        logger.error(f"Admin user creation failed: {e}", exc_info=True)
         return False
 
+
 async def main():
-    """Main function to run all checks and fixes"""
-    print("Starting database checks and admin user creation...")
-
-    # Check database connection
+    """Main function to run all setup steps."""
+    print("\n" + "="*60)
+    print("TwinSecure Admin User Creation Script")
+    print("="*60 + "\n")
+    
+    # Step 1: Check database connection
     if not await check_database_connection():
+        print("\n*** Setup failed: Cannot connect to database")
         return
-
-    # Check users table
+    
+    # Step 2: Check users table exists
     table_exists = await check_users_table()
-
-    # Create admin partition if needed
-    if not table_exists or not await create_admin_partition():
-        print("Could not ensure admin partition exists.")
-        return
-
-    # Create admin user
+    
+    # Step 3: Create admin partition if needed (PostgreSQL only)
+    db_url = settings.database.DATABASE_URL
+    if db_url.startswith("sqlite"):
+        # SQLite doesn't need partitions
+        if not table_exists:
+            print("\n*** Setup failed: Users table does not exist")
+            return
+    else:
+        # PostgreSQL needs partitions
+        if not table_exists or not await create_admin_partition():
+            print("\n*** Setup failed: Could not ensure admin partition exists")
+            return
+    
+    # Step 4: Create admin user
     if not await create_admin_user():
-        print("Failed to create admin user.")
+        print("\n*** Setup failed: Could not create admin user")
         return
+    
+    print("\n" + "="*60)
+    print("*** All operations completed successfully!")
+    print("="*60 + "\n")
 
-    print("All operations completed successfully!")
 
 if __name__ == "__main__":
     asyncio.run(main())
+

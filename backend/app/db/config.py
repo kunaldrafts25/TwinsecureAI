@@ -1,64 +1,78 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
-"""
-
-"""
-Database configuration module.
-This module provides configuration for database connections.
+Database configuration helpers.
 """
 
 import os
-from typing import Dict, Optional
+from urllib.parse import quote_plus
+
+from pydantic import SecretStr
 
 from app.core.config import logger, settings
 
 
 def get_database_url() -> str:
     """
-    Get the database URL based on environment variables.
+    Get the database URL for SQLAlchemy connections.
     
-    Returns:
-        str: The database URL for SQLAlchemy
+    First checks for direct DATABASE_URL, otherwise uses DATABASE_TYPE setting.
+    Defaults to SQLite if not specified.
     """
     # Check if DATABASE_URL is directly provided
-    if hasattr(settings, "DATABASE_URL") and settings.DATABASE_URL:
-        logger.info(f"Using provided DATABASE_URL: {settings.DATABASE_URL}")
-        return settings.DATABASE_URL
+    if hasattr(settings.database, "DATABASE_URL") and settings.database.DATABASE_URL:
+        return settings.database.DATABASE_URL
     
-    # Otherwise, build from components
-    user = settings.POSTGRES_USER
-    password = settings.POSTGRES_PASSWORD
-    server = settings.POSTGRES_SERVER
-    port = settings.POSTGRES_PORT
-    db = settings.POSTGRES_DB
+    # Use the DATABASE_TYPE from settings (defaults to "sqlite")
+    db_type = settings.database.DATABASE_TYPE.lower() if hasattr(settings.database, "DATABASE_TYPE") else "sqlite"
     
-    # Log the database connection info (without password)
-    logger.info(f"Connecting to database: {user}@{server}:{port}/{db}")
+    if db_type == "postgres":
+        # Build PostgreSQL connection from components
+        if not settings.database.POSTGRES_PASSWORD:
+            raise ValueError("POSTGRES_PASSWORD is required when using PostgreSQL")
+        
+        user = settings.database.POSTGRES_USER
+        password = settings.database.POSTGRES_PASSWORD
+        
+        # Handle SecretStr type
+        if isinstance(password, SecretStr):
+            password = password.get_secret_value()
+        
+        server = settings.database.POSTGRES_SERVER
+        port = settings.database.POSTGRES_PORT
+        db = settings.database.POSTGRES_DB
+        
+        # URL encode password for special characters
+        encoded_password = quote_plus(password)
+        
+        logger.info(f"Connecting to PostgreSQL: {user}@{server}:{port}/{db}")
+        return f"postgresql+asyncpg://{user}:{encoded_password}@{server}:{port}/{db}"
     
-    # Build the connection URL
-    return f"postgresql+asyncpg://{user}:{password}@{server}:{port}/{db}"
+    # Default to SQLite
+    db_path = settings.database.SQLITE_DB_PATH if hasattr(settings.database, "SQLITE_DB_PATH") else "./twinsecure.db"
+    logger.info(f"Connecting to SQLite database: {db_path}")
+    return f"sqlite+aiosqlite:///{db_path}"
 
 
-def get_database_config() -> Dict[str, str]:
+def get_database_config() -> dict[str, str]:
     """
     Get database configuration as a dictionary.
     
-    Returns:
-        Dict[str, str]: Database configuration
+    Useful for tools that need separate connection parameters.
     """
+    password = settings.database.POSTGRES_PASSWORD
+    
+    if isinstance(password, SecretStr):
+        password = password.get_secret_value()
+    
     return {
-        "user": settings.POSTGRES_USER,
-        "password": settings.POSTGRES_PASSWORD,
-        "host": settings.POSTGRES_SERVER,
-        "port": str(settings.POSTGRES_PORT),
-        "database": settings.POSTGRES_DB,
+        "user": settings.database.POSTGRES_USER,
+        "password": password,
+        "host": settings.database.POSTGRES_SERVER,
+        "port": str(settings.database.POSTGRES_PORT),
+        "database": settings.database.POSTGRES_DB,
     }
 
 
@@ -66,10 +80,9 @@ def get_test_database_url() -> str:
     """
     Get the test database URL.
     
-    Returns:
-        str: The test database URL
+    Uses SQLite by default for fast testing, can switch to PostgreSQL
+    by setting TEST_DB=postgres environment variable.
     """
-    # For testing, we can use either a test PostgreSQL database or SQLite
     test_db = os.environ.get("TEST_DB", "sqlite")
     
     if test_db.lower() == "postgres":
@@ -80,7 +93,8 @@ def get_test_database_url() -> str:
         test_password = os.environ.get("TEST_PG_PASSWORD", "postgres")
         test_db_name = os.environ.get("TEST_PG_DB", "test_twinsecure")
         
-        return f"postgresql+asyncpg://{test_user}:{test_password}@{test_host}:{test_port}/{test_db_name}"
-    else:
-        # Use SQLite for testing (in-memory or file-based)
-        return "sqlite+aiosqlite:///./test.db"
+        encoded_password = quote_plus(test_password)
+        return f"postgresql+asyncpg://{test_user}:{encoded_password}@{test_host}:{test_port}/{test_db_name}"
+    
+    # Use SQLite for testing (file-based for persistence across tests)
+    return "sqlite+aiosqlite:///./test.db"

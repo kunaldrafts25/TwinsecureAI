@@ -1,161 +1,302 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+ML training pipeline for anomaly detection autoencoder.
 """
 
-# Import necessary ML libraries
-# import tensorflow as tf
-# import pandas as pd
-# from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import StandardScaler
-# from app.db.session import AsyncSessionLocal # If fetching training data from DB
-# from app.db import crud # If fetching training data from DB
-import asyncio  # For scheduling
-import threading
-import time
-
-import schedule  # For scheduling (or use APScheduler, Celery Beat, Cron)
+import asyncio
+import math
+from collections import Counter
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from app.core.config import logger, settings
+from app.db.session import AsyncSessionLocal
+
+ML_TRAINING_DEPENDENCIES_AVAILABLE = True
+
+try:
+    import numpy as np  # type: ignore
+except Exception as exc:  # pragma: no cover
+    ML_TRAINING_DEPENDENCIES_AVAILABLE = False
+    np = None  # type: ignore[assignment]
+    logger.warning(f"NumPy not available. ML training disabled. Error: {exc}")
+
+try:
+    import pandas as pd  # type: ignore
+except Exception as exc:  # pragma: no cover
+    ML_TRAINING_DEPENDENCIES_AVAILABLE = False
+    pd = None  # type: ignore[assignment]
+    logger.warning(f"Pandas not available. ML training disabled. Error: {exc}")
+
+try:
+    from sklearn.model_selection import train_test_split  # type: ignore
+    from sklearn.preprocessing import StandardScaler  # type: ignore
+except Exception as exc:  # pragma: no cover
+    ML_TRAINING_DEPENDENCIES_AVAILABLE = False
+    StandardScaler = None  # type: ignore[assignment]
+    train_test_split = None  # type: ignore[assignment]
+    logger.warning(f"scikit-learn not available. ML training disabled. Error: {exc}")
+
+# Try to import TensorFlow
+try:
+    import tensorflow as tf  # type: ignore
+    from tensorflow import keras  # type: ignore
+    TENSORFLOW_AVAILABLE = True
+except Exception as exc:  # pragma: no cover
+    TENSORFLOW_AVAILABLE = False
+    logger.warning(f"TensorFlow not available. ML training disabled. Error: {exc}")
+
+# Feature columns for training
+FEATURE_COLUMNS = [
+    "request_freq",
+    "url_entropy",
+    "response_time",
+    "payload_size",
+    "status_code_ratio",
+    "unique_ips",
+    "connection_duration",
+    "bytes_sent",
+    "bytes_received",
+    "protocol_type",
+]
 
 
-async def fetch_training_data():
+async def fetch_training_data(days: int = 30):
     """
-    Placeholder function to fetch 'normal' traffic data for training.
-    This might query logs (Loki?), a database, or read from files.
+    Fetch 'normal' traffic data from database for training.
+    
+    Args:
+        days: Number of days of historical data to fetch
+        
+    Returns:
+        DataFrame with training features, or None if unavailable
     """
-    logger.info("Fetching training data for ML model...")
-    # Example: Fetch data from the last N days from the database
-    # async with AsyncSessionLocal() as db:
-    #     # Define criteria for 'normal' data (e.g., exclude known bad IPs, low abuse scores)
-    #     normal_alerts = await crud.alert.get_multi(...)
-    #     # Extract relevant features from normal_alerts into a pandas DataFrame
-    #     df = pd.DataFrame([...])
+    if not ML_TRAINING_DEPENDENCIES_AVAILABLE or pd is None:
+        logger.debug("ML training dependencies missing. Skipping data fetch.")
+        return None
 
-    # Placeholder: Generate dummy data
-    await asyncio.sleep(2)  # Simulate fetch time
-    # df = pd.DataFrame(np.random.rand(1000, 5), columns=['feat1', 'feat2', 'feat3', 'feat4', 'feat5'])
-    logger.info("Training data fetched (placeholder).")
-    return None  # Return the DataFrame (df)
+    logger.info(f"Fetching training data from last {days} days...")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            from sqlalchemy import select, and_
+            from app.db.models import Alert
+            
+            # Get alerts from last N days that are NOT anomalies
+            # Low severity + low abuse score = normal traffic
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            
+            stmt = (
+                select(Alert)
+                .where(
+                    and_(
+                        Alert.triggered_at >= cutoff_date,
+                        Alert.severity.in_(["low", "info"]),
+                        Alert.abuse_score <= 20,
+                    )
+                )
+                .limit(10000)  # Prevent memory issues
+            )
+            
+            result = await db.execute(stmt)
+            alerts = result.scalars().all()
+            
+            if not alerts:
+                logger.warning("No training data found in database.")
+                return None
+            
+            logger.info(f"Found {len(alerts)} normal traffic samples.")
+            
+            # Extract features from alerts
+            features_list = []
+            for alert in alerts:
+                payload = alert.payload or {}
+                
+                features = {
+                    "request_freq": payload.get("request_count", 1),
+                    "url_entropy": _calculate_entropy(payload.get("url", "")),
+                    "response_time": payload.get("response_time_ms", 0) / 1000.0,
+                    "payload_size": len(str(payload)),
+                    "status_code_ratio": 1.0 if payload.get("status_code", 200) < 400 else 0.0,
+                    "unique_ips": 1,
+                    "connection_duration": payload.get("duration_seconds", 0),
+                    "bytes_sent": payload.get("bytes_sent", 0),
+                    "bytes_received": payload.get("bytes_received", 0),
+                    "protocol_type": _encode_protocol(payload.get("protocol", "TCP")),
+                }
+                features_list.append(features)
+            
+            df = pd.DataFrame(features_list)
+            logger.info(f"Training data: {len(df)} samples, {len(df.columns)} features")
+            return df
+            
+    except Exception as e:
+        logger.error(f"Error fetching training data: {e}", exc_info=True)
+        return None
 
 
-async def train_autoencoder_model():
+def _calculate_entropy(text: str) -> float:
+    """Calculate Shannon entropy of a string."""
+    if not text:
+        return 0.0
+    
+    counts = Counter(text)
+    length = len(text)
+    entropy = -sum(
+        (count / length) * math.log2(count / length)
+        for count in counts.values()
+        if count > 0
+    )
+    return entropy
+
+
+def _encode_protocol(protocol: str) -> float:
+    """Encode protocol as numeric value."""
+    protocol_map = {
+        "TCP": 1.0,
+        "UDP": 2.0,
+        "ICMP": 3.0,
+        "HTTP": 4.0,
+        "HTTPS": 5.0,
+    }
+    return protocol_map.get(protocol.upper(), 0.0)
+
+
+async def train_autoencoder_model() -> bool:
     """
-    Placeholder function to train the TensorFlow Autoencoder model.
+    Train TensorFlow Autoencoder on normal traffic data.
+    
+    Returns:
+        True if training successful, False otherwise
     """
+    if not TENSORFLOW_AVAILABLE or not ML_TRAINING_DEPENDENCIES_AVAILABLE or np is None or pd is None or StandardScaler is None or train_test_split is None:
+        logger.error("ML training dependencies not available. Cannot train.")
+        return False
+    
     logger.info("Starting ML model training...")
+    
     try:
         # 1. Fetch Training Data
-        training_df = await fetch_training_data()
+        training_df = await fetch_training_data(days=30)
         if training_df is None or training_df.empty:
-            logger.warning("No training data available. Skipping model training.")
-            return
-
+            logger.warning("No training data. Skipping training.")
+            return False
+        
+        if len(training_df) < 100:
+            logger.warning(f"Not enough data ({len(training_df)}). Need >= 100.")
+            return False
+        
         # 2. Preprocess Data
-        # - Select features
-        # - Handle missing values
-        # - Scale data (e.g., StandardScaler)
-        # scaler = StandardScaler()
-        # scaled_data = scaler.fit_transform(training_df)
-        # TODO: Save the scaler object for use during detection
-
-        # 3. Split Data (Optional, if evaluating on a test set)
-        # X_train, X_test = train_test_split(scaled_data, test_size=0.2, random_state=42)
-
-        # 4. Define Autoencoder Model Architecture
-        # input_dim = X_train.shape[1]
-        # encoding_dim = max(2, input_dim // 2) # Example encoding dimension
-        # autoencoder = tf.keras.models.Sequential([
-        #     tf.keras.layers.InputLayer(input_shape=(input_dim,)),
-        #     tf.keras.layers.Dense(encoding_dim, activation='relu'),
-        #     # Add more layers if needed
-        #     tf.keras.layers.Dense(input_dim, activation='sigmoid') # Output matches input range (0-1 after scaling)
-        # ])
-        # autoencoder.compile(optimizer='adam', loss='mse') # Mean Squared Error loss
-
-        # 5. Train the Model
-        # EPOCHS = 50
-        # BATCH_SIZE = 32
-        # history = autoencoder.fit(X_train, X_train, # Train to reconstruct itself
-        #                           epochs=EPOCHS,
-        #                           batch_size=BATCH_SIZE,
-        #                           shuffle=True,
-        #                           validation_data=(X_test, X_test), # Validate on test set
-        #                           verbose=1) # Set verbose level
-        # logger.info("Model training completed.")
-
-        # 6. Evaluate and Determine Threshold (Optional but recommended)
-        # Calculate reconstruction errors on the test set
-        # test_reconstructions = autoencoder.predict(X_test)
-        # mse = np.mean(np.power(X_test - test_reconstructions, 2), axis=1)
-        # Define threshold (e.g., mean + N * std_dev, or a percentile)
-        # threshold = np.percentile(mse, 95) # Example: 95th percentile
-        # logger.info(f"Anomaly detection threshold determined: {threshold}")
-        # TODO: Store this threshold somewhere accessible by the detector
-
-        # 7. Save the Model and Scaler
-        # Ensure the directory exists
-        # model_dir = os.path.dirname(settings.ML_MODEL_PATH)
-        # if model_dir: os.makedirs(model_dir, exist_ok=True)
-        # autoencoder.save(settings.ML_MODEL_PATH)
-        # TODO: Save the scaler object (e.g., using joblib or pickle)
-        # logger.info(f"ML model saved to: {settings.ML_MODEL_PATH}")
-
-        # --- Placeholder ---
-        await asyncio.sleep(5)  # Simulate training time
-        logger.info("ML model training finished (placeholder).")
-        # --- End Placeholder ---
-
+        if not all(col in training_df.columns for col in FEATURE_COLUMNS):
+            logger.error(f"Missing features. Expected: {FEATURE_COLUMNS}")
+            return False
+        
+        features = training_df[FEATURE_COLUMNS].copy()
+        features = features.fillna(0.0)
+        
+        # Scale data
+        scaler = StandardScaler()
+        scaled_data = scaler.fit_transform(features)
+        
+        # 3. Split Data
+        X_train, X_test = train_test_split(scaled_data, test_size=0.2, random_state=42)
+        
+        # 4. Build Autoencoder
+        input_dim = X_train.shape[1]
+        encoding_dim = max(2, input_dim // 2)
+        
+        autoencoder = keras.Sequential([
+            keras.layers.InputLayer(input_shape=(input_dim,)),
+            keras.layers.Dense(encoding_dim * 2, activation="relu"),
+            keras.layers.Dense(encoding_dim, activation="relu"),
+            keras.layers.Dense(encoding_dim * 2, activation="relu"),
+            keras.layers.Dense(input_dim, activation="sigmoid"),
+        ])
+        
+        autoencoder.compile(optimizer="adam", loss="mse", metrics=["mae"])
+        logger.info(f"Model: Input={input_dim}, Encoding={encoding_dim}")
+        
+        # 5. Train
+        epochs = getattr(settings, "ML_EPOCHS", 50)
+        batch_size = getattr(settings, "ML_BATCH_SIZE", 32)
+        
+        logger.info(f"Training for {epochs} epochs, batch={batch_size}...")
+        autoencoder.fit(
+            X_train, X_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            shuffle=True,
+            validation_data=(X_test, X_test),
+            verbose=1,
+        )
+        
+        # 6. Determine Threshold (95th percentile of reconstruction errors)
+        test_reconstructions = autoencoder.predict(X_test, verbose=0)
+        mse = np.mean(np.power(X_test - test_reconstructions, 2), axis=1)
+        threshold = np.percentile(mse, 95)
+        logger.info(f"Anomaly threshold (95th percentile): {threshold:.4f}")
+        
+        # 7. Save Model
+        model_path = Path(settings.ML_MODEL_PATH)
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        autoencoder.save(str(model_path))
+        logger.info(f"Model saved: {model_path}")
+        
+        # Save scaler
+        import joblib
+        scaler_path = model_path.parent / "scaler.pkl"
+        joblib.dump(scaler, scaler_path)
+        logger.info(f"Scaler saved: {scaler_path}")
+        
+        # Save threshold
+        threshold_path = model_path.parent / "threshold.txt"
+        threshold_path.write_text(str(threshold))
+        logger.info(f"Threshold saved: {threshold_path}")
+        
+        logger.info("[SUCCESS] ML training completed successfully!")
+        return True
+        
     except Exception as e:
-        logger.error(f"Error during ML model training: {e}", exc_info=True)
+        logger.error(f"Training failed: {e}", exc_info=True)
+        return False
 
 
-# --- Scheduling Logic ---
-# This uses the 'schedule' library. You might prefer APScheduler for async or Celery Beat.
-def run_training_scheduler():
-    """Runs the training job according to the schedule."""
-    if not settings.ML_TRAINING_SCHEDULE:
-        logger.info("ML training schedule not set. Automatic training disabled.")
-        return
-
-    # Example: schedule.every().day.at("02:00").do(lambda: asyncio.run(train_autoencoder_model()))
-    # Parse cron schedule if needed, or use a library that supports cron directly (like APScheduler)
-    logger.info(
-        f"Scheduling ML training with schedule: {settings.ML_TRAINING_SCHEDULE}"
-    )
-    # This is a basic example; robust cron parsing/scheduling is more complex with 'schedule' library
-    if settings.ML_TRAINING_SCHEDULE == "0 2 * * *":  # Basic check for 2 AM daily
-        schedule.every().day.at("02:00").do(
-            lambda: asyncio.run(train_autoencoder_model())
-        )
-    else:
-        logger.warning(
-            f"ML_TRAINING_SCHEDULE format '{settings.ML_TRAINING_SCHEDULE}' not fully supported by basic scheduler. Only '0 2 * * *' (2 AM daily) is implemented."
-        )
-
+async def schedule_periodic_training(interval_hours: int = 168) -> None:
+    """
+    Schedule periodic model retraining (default: weekly).
+    
+    This should be called as a background task on application startup.
+    
+    Args:
+        interval_hours: Hours between training runs (default 168 = 1 week)
+    """
+    logger.info(f"Scheduled ML retraining every {interval_hours} hours")
+    
     while True:
-        schedule.run_pending()
-        time.sleep(60)  # Check every minute
+        try:
+            # Wait for interval
+            await asyncio.sleep(interval_hours * 3600)
+            
+            logger.info("Starting scheduled model retraining...")
+            success = await train_autoencoder_model()
+            
+            if success:
+                logger.info("[SUCCESS] Scheduled retraining successful")
+            else:
+                logger.warning("[WARNING] Scheduled retraining failed")
+                
+        except asyncio.CancelledError:
+            logger.info("Periodic training task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in periodic training: {e}", exc_info=True)
+            # Continue running even if one training fails
 
 
-def start_ml_training_schedule():
-    """Starts the ML training scheduler in a separate thread."""
-    if settings.ML_MODEL_PATH and settings.ML_TRAINING_SCHEDULE:
-        logger.info("Starting ML training scheduler thread...")
-        scheduler_thread = threading.Thread(target=run_training_scheduler, daemon=True)
-        scheduler_thread.start()
-    else:
-        logger.info(
-            "ML model path or training schedule not configured. Scheduler not started."
-        )
-
-
-# Call this function during application startup (e.g., in main.py's startup event)
-# Be mindful of running async code within the scheduled job if using 'schedule'.
-# APScheduler might be a better fit for async environments.
+# Entry point for manual training
+if __name__ == "__main__":
+    asyncio.run(train_autoencoder_model())

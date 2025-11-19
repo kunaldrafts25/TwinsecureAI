@@ -52,35 +52,33 @@ FROM base as runtime
 WORKDIR /app
 
 # Copy installed dependencies from the builder stage
-# If using Poetry:
-# COPY --from=builder /opt/pypoetry/ /opt/pypoetry/
-# ENV PATH="/opt/pypoetry/bin:$PATH"
-# If using requirements.txt:
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy the application code
-COPY ./app . 
-
-COPY ./alembic /app/alembic
-COPY alembic.ini /app/alembic.ini
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser
-USER appuser
-WORKDIR /home/appuser/app 
-# Change workdir to user's home
-COPY --chown=appuser:appuser ./app /home/appuser/app/app
-COPY --chown=appuser:appuser ./alembic /home/appuser/app/alembic
-COPY --chown=appuser:appuser alembic.ini /home/appuser/app/alembic.ini
 
+# Copy the application code
+COPY --chown=appuser:appuser ./app /app/app
+COPY --chown=appuser:appuser ./alembic /app/alembic
+COPY --chown=appuser:appuser ./scripts /app/scripts
+COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/reports /app/data /app/models && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose the port the app runs on
 EXPOSE 8000
 
 # Command to run the application using Uvicorn
-# The entrypoint script can handle migrations before starting
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-# Using reload for development (change for production)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Remove --reload for production
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

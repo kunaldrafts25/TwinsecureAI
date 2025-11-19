@@ -1,43 +1,36 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
-"""
-
-"""
 Central location for all enum definitions used throughout the application.
-This helps prevent circular imports.
+This helps prevent circular imports and provides type safety.
 """
 
-import enum
+from enum import Enum
 
 
-class UserRole(str, enum.Enum):
+class UserRole(str, Enum):
     """User role enumeration"""
-
+    
     ADMIN = "admin"
     ANALYST = "analyst"
     VIEWER = "viewer"
     API_USER = "api_user"
 
 
-class UserStatus(str, enum.Enum):
+class UserStatus(str, Enum):
     """User status enumeration"""
-
+    
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     PENDING = "pending"
 
 
-class AlertType(str, enum.Enum):
+class AlertType(str, Enum):
     """Alert type enumeration"""
-
+    
     HONEYPOT_TRIGGER = "honeypot_trigger"
     BRUTE_FORCE = "brute_force"
     SUSPICIOUS_LOGIN = "suspicious_login"
@@ -48,9 +41,9 @@ class AlertType(str, enum.Enum):
     CUSTOM = "custom"
 
 
-class AlertSeverity(str, enum.Enum):
+class AlertSeverity(str, Enum):
     """Alert severity enumeration"""
-
+    
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -58,9 +51,9 @@ class AlertSeverity(str, enum.Enum):
     INFO = "info"
 
 
-class AlertStatus(str, enum.Enum):
+class AlertStatus(str, Enum):
     """Alert status enumeration"""
-
+    
     NEW = "new"
     ASSIGNED = "assigned"
     ACKNOWLEDGED = "acknowledged"
@@ -70,9 +63,9 @@ class AlertStatus(str, enum.Enum):
     FALSE_POSITIVE = "false_positive"
 
 
-class ReportType(str, enum.Enum):
+class ReportType(str, Enum):
     """Report type enumeration"""
-
+    
     DAILY_SUMMARY = "daily_summary"
     WEEKLY_SUMMARY = "weekly_summary"
     MONTHLY_SUMMARY = "monthly_summary"

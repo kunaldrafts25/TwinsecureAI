@@ -1,31 +1,24 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+JWT token schemas.
 """
 
-from typing import Optional
+from uuid import UUID
 
-from pydantic import UUID4, BaseModel
+from pydantic import BaseModel
 
 
 class Token(BaseModel):
-    """
-    Schema for the JWT access token response.
-    """
-
+    """Schema for the JWT access token response."""
+    
     access_token: str
     token_type: str = "bearer"
 
 
 class TokenPayload(BaseModel):
-    """
-    Schema for the data encoded within the JWT token.
-    """
-
-    sub: Optional[UUID4] = None  # Subject (user ID)
+    """Schema for the data encoded within the JWT token."""
+    
+    sub: UUID | None = None  # Subject (user ID)

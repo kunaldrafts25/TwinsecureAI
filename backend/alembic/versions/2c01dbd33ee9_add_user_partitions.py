@@ -17,31 +17,35 @@ depends_on = None
 
 
 def upgrade():
-    # Create partitions for each role
-    op.execute("""
-    CREATE TABLE users_admin PARTITION OF users
-    FOR VALUES IN ('ADMIN');
-    """)
+    # Create partitions for each role (PostgreSQL only - SQLite doesn't support partitioning)
+    bind = op.get_bind()
+    if bind.dialect.name == 'postgresql':
+        op.execute("""
+        CREATE TABLE users_admin PARTITION OF users
+        FOR VALUES IN ('ADMIN');
+        """)
 
-    op.execute("""
-    CREATE TABLE users_analyst PARTITION OF users
-    FOR VALUES IN ('ANALYST');
-    """)
+        op.execute("""
+        CREATE TABLE users_analyst PARTITION OF users
+        FOR VALUES IN ('ANALYST');
+        """)
 
-    op.execute("""
-    CREATE TABLE users_viewer PARTITION OF users
-    FOR VALUES IN ('VIEWER');
-    """)
+        op.execute("""
+        CREATE TABLE users_viewer PARTITION OF users
+        FOR VALUES IN ('VIEWER');
+        """)
 
-    op.execute("""
-    CREATE TABLE users_api_user PARTITION OF users
-    FOR VALUES IN ('API_USER');
-    """)
+        op.execute("""
+        CREATE TABLE users_api_user PARTITION OF users
+        FOR VALUES IN ('API_USER');
+        """)
 
 
 def downgrade():
-    # Drop partitions
-    op.execute("DROP TABLE IF EXISTS users_admin;")
-    op.execute("DROP TABLE IF EXISTS users_analyst;")
-    op.execute("DROP TABLE IF EXISTS users_viewer;")
-    op.execute("DROP TABLE IF EXISTS users_api_user;")
+    # Drop partitions (PostgreSQL only)
+    bind = op.get_bind()
+    if bind.dialect.name == 'postgresql':
+        op.execute("DROP TABLE IF EXISTS users_admin;")
+        op.execute("DROP TABLE IF EXISTS users_analyst;")
+        op.execute("DROP TABLE IF EXISTS users_viewer;")
+        op.execute("DROP TABLE IF EXISTS users_api_user;")

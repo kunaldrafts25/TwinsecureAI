@@ -1,125 +1,117 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
+Alert schemas for API requests and responses.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any
+from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field, IPvAnyAddress, field_validator
+from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress, field_validator
 
 
-# Define enums for alert severity and status
 class AlertSeverity(str, Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
-    info = "info"
+    """Alert severity levels."""
+    
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
 
 
 class AlertStatus(str, Enum):
-    new = "new"
-    acknowledged = "acknowledged"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    false_positive = "false_positive"
+    """Alert status values."""
+    
+    NEW = "new"
+    ACKNOWLEDGED = "acknowledged"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    FALSE_POSITIVE = "false_positive"
 
 
-# --- Base Schema ---
 class AlertBase(BaseModel):
+    """Shared properties across all alert schemas."""
+    
     alert_type: str = Field(..., example="Honeypot Triggered")
-    source_ip: Optional[IPvAnyAddress] = Field(None, example="203.0.113.45")
-    ip_info: Optional[Dict[str, Any]] = Field(
-        None, example={"country": "China", "city": "Beijing", "asn": "AS1234"}
+    source_ip: IPvAnyAddress | None = Field(None, example="203.0.113.45")
+    ip_info: dict[str, Any] | None = Field(
+        None,
+        example={"country": "China", "city": "Beijing", "asn": "AS1234"}
     )
-    payload: Optional[Dict[str, Any]] = Field(
-        None, example={"headers": {"User-Agent": "..."}, "body": "SELECT *..."}
+    payload: dict[str, Any] | None = Field(
+        None,
+        example={"headers": {"User-Agent": "..."}, "body": "SELECT *..."}
     )
-    raw_log: Optional[str] = None
-    abuse_score: Optional[int] = Field(None, ge=0, le=100, example=82)
-    severity: Optional[AlertSeverity] = Field(
-        AlertSeverity.medium, example=AlertSeverity.high
-    )
-    status: Optional[AlertStatus] = Field(
-        AlertStatus.new, example=AlertStatus.acknowledged
-    )
-    notes: Optional[str] = None
-    triggered_at: Optional[datetime] = Field(
-        default_factory=datetime.now, example="2025-04-22T14:35:12+05:30"
+    raw_log: str | None = None
+    abuse_score: int | None = Field(None, ge=0, le=100, example=82)
+    severity: AlertSeverity | None = Field(AlertSeverity.MEDIUM, example=AlertSeverity.HIGH)
+    status: AlertStatus | None = Field(AlertStatus.NEW, example=AlertStatus.ACKNOWLEDGED)
+    notes: str | None = None
+    triggered_at: datetime | None = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        example="2025-04-22T14:35:12Z"
     )
 
 
-# --- Creation Schema ---
-# Properties required when creating an alert (most are in Base)
 class AlertCreate(AlertBase):
-    pass  # Inherits all fields from AlertBase
+    """Properties required when creating an alert."""
+    pass
 
 
-# --- Update Schema ---
-# Properties allowed when updating an alert (e.g., status, notes)
 class AlertUpdate(BaseModel):
-    status: Optional[AlertStatus] = None
-    severity: Optional[AlertSeverity] = None
-    notes: Optional[str] = None
-    # Add other fields that analysts might update
+    """Properties allowed when updating an alert."""
+    
+    status: AlertStatus | None = None
+    severity: AlertSeverity | None = None
+    notes: str | None = None
 
 
-# --- Database Interaction Schema ---
 class AlertInDBBase(AlertBase):
-    id: UUID4
+    """Properties stored in database."""
+    
+    id: UUID
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True  # ORM mode
 
-
-# --- API Response Schema ---
-# Properties returned to the client
 class Alert(AlertInDBBase):
-    pass  # Inherits all fields from AlertInDBBase
+    """Properties returned to client."""
+    pass
 
 
-# --- Query Filters Schema ---
 class AlertQueryFilters(BaseModel):
     """Schema for filtering alerts in GET requests."""
-
-    country: Optional[str] = None
-    ip_address: Optional[IPvAnyAddress] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    severity: Optional[AlertSeverity] = None
-    status: Optional[AlertStatus] = None
-    alert_type: Optional[str] = None
-    min_abuse_score: Optional[int] = Field(None, ge=0, le=100)
-    max_abuse_score: Optional[int] = Field(None, ge=0, le=100)
+    
+    country: str | None = None
+    ip_address: IPvAnyAddress | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    severity: AlertSeverity | None = None
+    status: AlertStatus | None = None
+    alert_type: str | None = None
+    min_abuse_score: int | None = Field(None, ge=0, le=100)
+    max_abuse_score: int | None = Field(None, ge=0, le=100)
     limit: int = Field(100, ge=1, le=1000)
     offset: int = Field(0, ge=0)
-
+    
     @field_validator("end_time")
-    def end_time_must_be_after_start_time(cls, v, info):
-        values = info.data
-        if v and values.get("start_time") and v < values["start_time"]:
+    @classmethod
+    def end_time_must_be_after_start_time(cls, v: datetime | None, info) -> datetime | None:
+        if v and info.data.get("start_time") and v < info.data["start_time"]:
             raise ValueError("end_time must be after start_time")
         return v
-
+    
     @field_validator("max_abuse_score")
-    def max_score_must_be_gte_min_score(cls, v, info):
-        values = info.data
-        if (
-            v is not None
-            and values.get("min_abuse_score") is not None
-            and v < values["min_abuse_score"]
-        ):
-            raise ValueError(
-                "max_abuse_score must be greater than or equal to min_abuse_score"
-            )
+    @classmethod
+    def max_score_must_be_gte_min_score(cls, v: int | None, info) -> int | None:
+        min_score = info.data.get("min_abuse_score")
+        if v is not None and min_score is not None and v < min_score:
+            raise ValueError("max_abuse_score must be >= min_abuse_score")
         return v

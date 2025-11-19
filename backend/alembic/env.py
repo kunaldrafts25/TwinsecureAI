@@ -39,9 +39,6 @@ db_url = settings.DATABASE_URL
 if not db_url:
     raise ValueError("DATABASE_URL environment variable is not set for Alembic.")
 
-# Print the database URL for debugging
-print(f"Database URL: {db_url}")
-
 # --- END TwinSecure Configuration ---
 
 

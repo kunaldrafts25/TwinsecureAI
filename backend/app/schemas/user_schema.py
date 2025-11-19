@@ -1,65 +1,59 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
 
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
-"""
-
-"""
 User schemas for API requests and responses.
 """
 
 from datetime import datetime
-from typing import Optional
+from uuid import UUID
 
-from pydantic import UUID4, BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.core.enums import UserRole
 
 
-# --- Base Schemas ---
-# Properties shared by all user-related schemas
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = True
+    """Shared properties across all user schemas."""
+    
+    email: EmailStr | None = None
+    is_active: bool | None = True
     is_superuser: bool = False
-    full_name: Optional[str] = None
-    role: Optional[UserRole] = UserRole.ADMIN  # Default role for superuser
+    full_name: str | None = None
+    role: UserRole | None = UserRole.VIEWER  # Default to viewer role
 
 
-# Properties required when creating a user
 class UserCreate(UserBase):
-    email: EmailStr  # Email is required on creation
-    password: str  # Password is required on creation
+    """Properties required when creating a user."""
+    
+    email: EmailStr  # Email is required
+    password: str  # Password is required
+    role: UserRole = UserRole.VIEWER  # Default to viewer role
 
 
-# Properties required when updating a user
 class UserUpdate(UserBase):
-    password: Optional[str] = None  # Allow password updates
+    """Properties allowed when updating a user."""
+    
+    password: str | None = None  # Allow password updates
 
 
-# --- Database Interaction Schemas ---
-# Properties stored in DB but not always returned to API (like hashed_password)
 class UserInDBBase(UserBase):
-    id: UUID4
+    """Properties stored in DB (includes internal fields)."""
+    
+    id: UUID
     hashed_password: str
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True  # Enable ORM mode (SQLAlchemy model -> Pydantic schema)
 
-
-# --- API Response Schema ---
-# Properties to return to the client (omits password)
 class User(UserBase):
-    id: UUID4
+    """Properties returned to client (safe for API response)."""
+    
+    id: UUID
     created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True  # Enable ORM mode
+    updated_at: datetime | None = None
+    
+    model_config = ConfigDict(from_attributes=True)

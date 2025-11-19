@@ -1,58 +1,43 @@
 """
 TwinSecure - Advanced Cybersecurity Platform
+
 Copyright © 2024 TwinSecure. All rights reserved.
-
-This file is part of TwinSecure, a proprietary cybersecurity platform.
-Unauthorized copying, distribution, modification, or use of this software
-is strictly prohibited without explicit written permission.
-
-For licensing inquiries: kunalsingh2514@gmail.com
 """
 
-from typing import List
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import logger
 from app.core.dependencies import get_current_active_superuser, get_current_active_user
 from app.db import crud
 from app.db.session import get_db
 from app.schemas import User, UserCreate, UserUpdate
 
-# You will need to import necessary schemas and dependencies here later
-# from app.schemas.user import User, UserCreate, UserUpdate, UserInDB # Example user schemas
-# from app.core.dependencies import get_current_active_user, get_current_active_superuser # Example dependencies
-# from app.services.user import create_user, get_user, get_users, update_user, delete_user # Example service functions
-
-# Define the APIRouter for user endpoints
 router = APIRouter()
 
-# --- CRITICAL STEP: Make the router available for import ---
-# Assign the router instance to a variable named 'users'
-users = router
 
-
-# Add your user-related endpoints here later
-# Example placeholder endpoint:
-@router.get("/me", response_model=dict)  # Replace dict with your User schema
+@router.get("/me", response_model=User)
 async def read_users_me(
-    # current_user: User = Depends(get_current_active_user) # Example dependency usage
-):
-    """
-    Get current user.
-    """
-    # return current_user # Example return
-    return {"message": "User endpoint placeholder"}  # Placeholder response
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """Get current authenticated user's profile."""
+    return current_user
 
 
-@router.get("/", response_model=List[User])
+@router.get("/", response_model=list[User])
 async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
-):
-    users = await crud.user.get_multi(db)
-    return users
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """List all users (superuser only). Supports pagination."""
+    user_list = await crud.user.get_multi(db, skip=skip, limit=limit)
+    logger.info(f"Superuser {current_user.email} listed users")
+    return user_list
 
 
 @router.get("/{user_id}", response_model=User)
@@ -60,10 +45,16 @@ async def get_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
-):
+) -> Any:
+    """Get specific user by ID (superuser only)."""
     user = await crud.user.get(db, user_id=user_id)
+    
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
     return user
 
 
@@ -72,8 +63,18 @@ async def create_user(
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
-):
+) -> Any:
+    """Create new user (superuser only)."""
+    existing_user = await crud.user.get_by_email(db, email=user_in.email)
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+    
     user = await crud.user.create(db, obj_in=user_in)
+    logger.info(f"New user created: {user.email} by {current_user.email}")
     return user
 
 
@@ -83,11 +84,18 @@ async def update_user(
     user_in: UserUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
-):
+) -> Any:
+    """Update existing user (superuser only)."""
     user = await crud.user.get(db, user_id=user_id)
+    
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
     updated_user = await crud.user.update(db, db_obj=user, obj_in=user_in)
+    logger.info(f"User {user.email} updated by {current_user.email}")
     return updated_user
 
 
@@ -96,12 +104,21 @@ async def delete_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
-):
+) -> None:
+    """Delete user (superuser only)."""
     user = await crud.user.get(db, user_id=user_id)
+    
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own account"
+        )
+    
     await crud.user.delete(db, user_id=user_id)
-    return None
-
-
-# Add other endpoints like create user, get user by id, etc.
+    logger.info(f"User {user.email} deleted by {current_user.email}")

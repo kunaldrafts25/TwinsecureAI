@@ -30,7 +30,7 @@ export const dashboardApiService = {
    */
   getSecurityMetrics: async (): Promise<SecurityMetrics> => {
     try {
-      const response = await api.get('/api/v1/dashboard/security-metrics');
+      const response = await api.get('/dashboard/security-metrics');
       return response.data;
     } catch (error) {
       console.error('Error fetching security metrics:', error);
@@ -43,7 +43,7 @@ export const dashboardApiService = {
    */
   getSystemHealth: async (): Promise<SystemHealth> => {
     try {
-      const response = await api.get('/api/v1/system/health');
+      const response = await api.get('/system/health');
       return response.data;
     } catch (error) {
       console.error('Error fetching system health:', error);
@@ -56,7 +56,7 @@ export const dashboardApiService = {
    */
   getAlertTrends: async (days: number = 30): Promise<AlertTrend[]> => {
     try {
-      const response = await api.get(`/api/v1/alerts/trends?days=${days}`);
+      const response = await api.get(`/dashboard/alert-trends?days=${days}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching alert trends:', error);
@@ -69,7 +69,7 @@ export const dashboardApiService = {
    */
   getAlertSeverityDistribution: async (): Promise<AlertSeverityDistribution[]> => {
     try {
-      const response = await api.get('/api/v1/alerts/distribution');
+      const response = await api.get('/dashboard/alert-severity-distribution');
       return response.data;
     } catch (error) {
       console.error('Error fetching alert severity distribution:', error);
@@ -82,7 +82,7 @@ export const dashboardApiService = {
    */
   getTopAttackVectors: async (limit: number = 5): Promise<AttackVector[]> => {
     try {
-      const response = await api.get(`/api/v1/alerts/attack-vectors?limit=${limit}`);
+      const response = await api.get(`/dashboard/attack-vectors?limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching top attack vectors:', error);
@@ -95,7 +95,7 @@ export const dashboardApiService = {
    */
   getTopAttackers: async (limit: number = 5): Promise<Attacker[]> => {
     try {
-      const response = await api.get(`/api/v1/alerts/attackers?limit=${limit}`);
+      const response = await api.get(`/dashboard/attackers?limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching top attackers:', error);
@@ -108,7 +108,7 @@ export const dashboardApiService = {
    */
   getComplianceStatus: async (): Promise<ComplianceStatus> => {
     try {
-      const response = await api.get('/api/v1/reports/compliance');
+      const response = await api.get('/dashboard/compliance');
       return response.data;
     } catch (error) {
       console.error('Error fetching compliance status:', error);
@@ -121,7 +121,7 @@ export const dashboardApiService = {
    */
   getDigitalTwinStatus: async (): Promise<DigitalTwinStatus> => {
     try {
-      const response = await api.get('/api/v1/honeypot/status');
+      const response = await api.get('/dashboard/digital-twin');
       return response.data;
     } catch (error) {
       console.error('Error fetching digital twin status:', error);
@@ -142,7 +142,7 @@ export const dashboardApiService = {
     digitalTwinStatus: DigitalTwinStatus;
   }> => {
     try {
-      const response = await api.get(`/api/v1/dashboard?days=${days}`);
+      const response = await api.get(`/dashboard?days=${days}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

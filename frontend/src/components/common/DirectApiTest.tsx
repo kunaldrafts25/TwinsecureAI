@@ -60,8 +60,15 @@ const DirectApiTest: React.FC = () => {
     try {
       // Create form data for login test
       const formData = new URLSearchParams();
-      formData.append('username', 'admin@finguard.com');
-      formData.append('password', '123456789');
+      const testEmail = import.meta.env.VITE_DEMO_EMAIL || 'admin@example.com';
+      const testPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
+      if (!testPassword) {
+        setError('VITE_DEMO_PASSWORD environment variable not set. Cannot test login.');
+        setStatus('error');
+        return;
+      }
+      formData.append('username', testEmail);
+      formData.append('password', testPassword);
 
       // Test the login endpoint directly
       const result = await axios.post(`${apiUrl}/auth/login`, formData, {
@@ -80,8 +87,15 @@ const DirectApiTest: React.FC = () => {
       try {
         console.log('Trying with email parameter instead of username...');
         const emailFormData = new URLSearchParams();
-        emailFormData.append('email', 'admin@finguard.com');
-        emailFormData.append('password', '123456789');
+        const testEmail = import.meta.env.VITE_DEMO_EMAIL || 'admin@example.com';
+        const testPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
+        if (!testPassword) {
+          setError('VITE_DEMO_PASSWORD environment variable not set.');
+          setStatus('error');
+          return;
+        }
+        emailFormData.append('email', testEmail);
+        emailFormData.append('password', testPassword);
 
         const emailResult = await axios.post(`${apiUrl}/auth/login`, emailFormData, {
           headers: {
@@ -96,9 +110,16 @@ const DirectApiTest: React.FC = () => {
         // Try with JSON format
         try {
           console.log('Trying with JSON format...');
+          const testEmail = import.meta.env.VITE_DEMO_EMAIL || 'admin@example.com';
+          const testPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
+          if (!testPassword) {
+            setError('VITE_DEMO_PASSWORD environment variable not set.');
+            setStatus('error');
+            return;
+          }
           const jsonResult = await axios.post(`${apiUrl}/auth/login`, {
-            email: 'admin@finguard.com',
-            password: '123456789'
+            email: testEmail,
+            password: testPassword
           }, {
             headers: {
               'Content-Type': 'application/json',

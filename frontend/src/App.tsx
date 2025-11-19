@@ -73,8 +73,6 @@ function App() {
    * Runs once when the component mounts
    */
   useEffect(() => {
-    console.log("App component mounted");
-
     /**
      * Initialize the application
      * This includes theme initialization and authentication check
@@ -83,81 +81,15 @@ function App() {
       try {
         // Step 1: Initialize theme from local storage or system preference
         initTheme();
-        console.log("Theme initialized");
 
         // Step 2: Check for existing authentication (token in local storage)
         await checkAuth();
-        console.log("Auth checked");
-
-        // Step 3: If no authentication is found, use development bypass
-        // This allows for easier development without needing to log in each time
-        if (!isAuthenticated) {
-          console.log("No authentication found, using development bypass");
-
-          // Create a mock user for development environment
-          const mockUser = {
-            id: "00000000-0000-0000-0000-000000000000",
-            email: "admin@finguard.com",
-            full_name: "Admin User",
-            role: "admin",
-            is_active: true,
-            is_superuser: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            last_login: new Date().toISOString(),
-            preferences: {},
-            notification_settings: {
-              email: true,
-              slack: false,
-              discord: false
-            }
-          };
-
-          // Update auth store with mock user to simulate authentication
-          useAuthStore.setState({
-            isAuthenticated: true,
-            user: mockUser,
-            isLoading: false,
-          });
-
-          console.log("Development bypass complete");
-        }
       } catch (error) {
         // Handle any errors during initialization
-        console.error("Error during initialization:", error);
-
-        // Use development bypass on error to ensure the app is usable
-        console.log("Error occurred, using development bypass");
-
-        // Create a mock user for development environment
-        const mockUser = {
-          id: "00000000-0000-0000-0000-000000000000",
-          email: "admin@finguard.com",
-          full_name: "Admin User",
-          role: "admin",
-          is_active: true,
-          is_superuser: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          last_login: new Date().toISOString(),
-          preferences: {},
-          notification_settings: {
-            email: true,
-            slack: false,
-            discord: false
-          }
-        };
-
-        // Update auth store with mock user
-        useAuthStore.setState({
-          isAuthenticated: true,
-          user: mockUser,
-          isLoading: false,
-        });
+        // Authentication check failures are handled by auth store
       } finally {
         // Always mark initialization as complete to prevent infinite loading
         setInitialized(true);
-        console.log("Initialization complete");
       }
     };
 
@@ -173,14 +105,10 @@ function App() {
     try {
       // Toggle the 'dark' class on the document root element based on theme state
       document.documentElement.classList.toggle('dark', theme === 'dark');
-      console.log("Theme applied:", theme);
     } catch (error) {
       console.error("Error applying theme:", error);
     }
   }, [theme]);
-
-  // Log authentication state for debugging purposes
-  console.log("Authentication state:", { isAuthenticated, initialized });
 
   /**
    * Render the application with appropriate routes based on authentication state
